@@ -1,20 +1,29 @@
-interface FilterBarProps {
-  showBookmarked: boolean;
-  onToggle: () => void;
-  onRefresh: () => void;
-  loading: boolean;
+import type { FeedEntry } from '../types';
+
+interface FeedListProps {
+  entries: FeedEntry[];
+  onToggleBookmark: (id: string) => void;
 }
 
-export function FilterBar({ showBookmarked, onToggle, onRefresh, loading }: FilterBarProps) {
+export function FeedList({ entries, onToggleBookmark }: FeedListProps) {
+  if (entries.length === 0) {
+    return <p>記事がありません。</p>;
+  }
+
   return (
-    <div>
-      <label>
-        <input type="checkbox" checked={showBookmarked} onChange={onToggle} />
-        ブックマークのみ表示
-      </label>
-      <button onClick={onRefresh} disabled={loading}>
-        {loading ? '取得中...' : '更新'}
-      </button>
-    </div>
+    <ul>
+      {entries.map(entry => (
+        <li key={entry.id}>
+          <a href={entry.link} target="_blank" rel="noopener noreferrer">
+            {entry.title}
+          </a>
+          <span> — {entry.source}</span>
+          {entry.pubDate && <span> ({new Date(entry.pubDate).toLocaleString('ja-JP')})</span>}
+          <button onClick={() => onToggleBookmark(entry.id)}>
+            {entry.bookmarked ? '★' : '☆'}
+          </button>
+        </li>
+      ))}
+    </ul>
   );
 }

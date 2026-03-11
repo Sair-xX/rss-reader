@@ -8,8 +8,12 @@ import { FeedList } from './components/FeedList';
 const STORAGE_KEY = 'rss-sources';
 
 function loadSources(): FeedSource[] {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  return raw ? JSON.parse(raw) : [];
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
 }
 
 export default function App() {
