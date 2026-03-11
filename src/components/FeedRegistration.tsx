@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FeedSource } from '../types';
+import type { FeedSource } from '../types';
 
 interface FeedRegistrationProps {
   sources: FeedSource[];
@@ -21,9 +21,11 @@ export function FeedRegistration({ sources, onAdd, onRemove }: FeedRegistrationP
   return (
     <div>
       <h2>フィード登録</h2>
-      <input value={label} onChange={e => setLabel(e.target.value)} placeholder="名前（例：Zenn）" />
-      <input value={url} onChange={e => setUrl(e.target.value)} placeholder="RSS URL" />
-      <button onClick={handleAdd}>追加</button>
+      <form onSubmit={e => { e.preventDefault(); handleAdd(); }}>
+        <input value={label} onChange={e => setLabel(e.target.value)} placeholder="名前（例：Zenn）" />
+        <input value={url} onChange={e => setUrl(e.target.value)} placeholder="RSS URL" />
+        <button type="submit">追加</button>
+      </form>
       <ul>
         {sources.map(s => (
           <li key={s.id}>

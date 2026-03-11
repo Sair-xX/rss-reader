@@ -5,9 +5,18 @@ const PROXY = 'https://api.allorigins.win/get?url=';
 
 async function fetchRSS(source: FeedSource): Promise<FeedEntry[]> {
   const res = await fetch(`${PROXY}${encodeURIComponent(source.url)}`);
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status}: ${source.url}`);
+  }
   const data = await res.json();
   const parser = new DOMParser();
   const xml = parser.parseFromString(data.contents, 'text/xml');
+
+  // DOMParser はパース失敗時に <parsererror> 要素を返す
+  if (xml.querySelector('parsererror')) {
+    throw new Error(`XMLパースエラー: ${source.url}`);
+  }
+
   const items = Array.from(xml.querySelectorAll('item'));
 
   return items.map((item, index) => {
@@ -35,16 +44,19 @@ export function useFeed(sources: FeedSource[]) {
     if (sources.length === 0) return;
     setLoading(true);
     try {
-      const results = await Promise.all(sources.map(fetchRSS));
-      const flat = results.flat().sort(
-        (a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime()
-      );
+      const results = await Promise.allSettled(sources.map(fetchRSS));
+      const flat = results
+        .flatMap(result => {
+          if (result.status === 'fulfilled') return result.value;
+          console.error('フィードの取得に失敗しました:', result.reason);
+          return [];
+        })
+        .sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
+
       setEntries(prev => {
         const bookmarked = new Set(prev.filter(e => e.bookmarked).map(e => e.id));
         return flat.map(e => ({ ...e, bookmarked: bookmarked.has(e.id) }));
       });
-    } catch (err) {
-      console.error('フィードの取得に失敗しました:', err);
     } finally {
       setLoading(false);
     }

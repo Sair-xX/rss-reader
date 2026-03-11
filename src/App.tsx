@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FeedSource } from './types';
+import type { FeedSource } from './types';
 import { useFeed } from './hooks/useFeed';
 import { FeedRegistration } from './components/FeedRegistration';
 import { FilterBar } from './components/FilterBar';
