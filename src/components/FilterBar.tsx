@@ -1,20 +1,38 @@
-interface FilterBarProps {
+interface Props {
+  searchQuery: string;
+  onSearchChange: (v: string) => void;
   showBookmarked: boolean;
   onToggle: () => void;
   onRefresh: () => void;
   loading: boolean;
+  count: number;
 }
 
-export function FilterBar({ showBookmarked, onToggle, onRefresh, loading }: FilterBarProps) {
+export function FilterBar({
+  searchQuery, onSearchChange,
+  showBookmarked, onToggle,
+  onRefresh, loading, count,
+}: Props) {
   return (
-    <div>
-      <label>
-        <input type="checkbox" checked={showBookmarked} onChange={onToggle} />
-        ブックマークのみ表示
+    <section className="panel row">
+      <input
+        value={searchQuery}
+        onChange={(e) => onSearchChange(e.target.value)}
+        placeholder="検索ワードを入力..."
+        className="input-wide"
+      />
+      <label className="checkbox-label">
+        <input
+          type="checkbox"
+          checked={showBookmarked}
+          onChange={onToggle}
+        />
+        Bookmarks
       </label>
       <button onClick={onRefresh} disabled={loading}>
-        {loading ? '取得中...' : '更新'}
+        {loading ? 'SCANNING...' : '更新'}
       </button>
-    </div>
+      <span className="count-badge">{count} articles</span>
+    </section>
   );
 }

@@ -3,6 +3,7 @@ export type FeedEntry = {
   title: string;
   link: string;
   source: string;
+  sourceId: string;
   pubDate: string;
   bookmarked: boolean;
 };

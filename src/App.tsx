@@ -19,6 +19,7 @@ function loadSources(): FeedSource[] {
 export default function App() {
   const [sources, setSources] = useState<FeedSource[]>(loadSources);
   const [showBookmarked, setShowBookmarked] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const { entries, loading, toggleBookmark, refresh } = useFeed(sources);
 
   useEffect(() => {
@@ -26,23 +27,35 @@ export default function App() {
   }, [sources]);
 
   const addSource = (source: FeedSource) =>
-    setSources(prev => [...prev, source]);
+    setSources((prev) => [...prev, source]);
   const removeSource = (id: string) =>
-    setSources(prev => prev.filter(s => s.id !== id));
+    setSources((prev) => prev.filter((s) => s.id !== id));
 
-  const displayed = showBookmarked ? entries.filter(e => e.bookmarked) : entries;
+  const displayed = entries
+    .filter((e) => !showBookmarked || e.bookmarked)
+    .filter((e) =>
+      !searchQuery ||
+      e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      e.source.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
   return (
-    <div>
-      <h1>RSSリーダー</h1>
+    <div className="app">
+      <header className="header">
+        <h1>RSS://READER</h1>
+        <div className="header-sub">NEURAL FEED AGGREGATOR v2.0</div>
+      </header>
       <FeedRegistration sources={sources} onAdd={addSource} onRemove={removeSource} />
       <FilterBar
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
         showBookmarked={showBookmarked}
-        onToggle={() => setShowBookmarked(prev => !prev)}
+        onToggle={() => setShowBookmarked((p) => !p)}
         onRefresh={refresh}
         loading={loading}
+        count={displayed.length}
       />
-      <FeedList entries={displayed} onToggleBookmark={toggleBookmark} />
+      <FeedList entries={displayed} loading={loading} onToggleBookmark={toggleBookmark} />
     </div>
   );
 }
