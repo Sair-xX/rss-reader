@@ -1,81 +1,77 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { FeedEntry, FeedSource } from '../types';
 
-const PROXY = 'https://api.allorigins.win/get?url=';
+const API = 'https://rss-reader-server-production-38dc.up.railway.app';
 
-async function fetchRSS(source: FeedSource): Promise<FeedEntry[]> {
-  const res = await fetch(`${PROXY}${encodeURIComponent(source.url)}`);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = await res.json();
-  const parser = new DOMParser();
-  const xml = parser.parseFromString(data.contents, 'text/xml');
-  if (xml.querySelector('parsererror')) throw new Error('XML parse error');
-  const items = Array.from(xml.querySelectorAll('item'));
-
-  return items.map((item) => {
-    const guid = item.querySelector('guid')?.textContent;
-    const link = item.querySelector('link')?.textContent;
-    return {
-      id: `${source.id}-${guid || link || Math.random()}`,
-      title: item.querySelector('title')?.textContent ?? '(no title)',
-      link: link ?? '#',
-      source: source.label,
-      sourceId: source.id,
-      pubDate: item.querySelector('pubDate')?.textContent ?? '',
-      bookmarked: false,
-    };
-  });
-}
-
-export function useFeed(sources: FeedSource[]) {
+export function useFeed() {
+  const [sources, setSources] = useState<FeedSource[]>([]);
   const [entries, setEntries] = useState<FeedEntry[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // ソース一覧取得
+  const fetchSources = useCallback(async () => {
+    const res = await fetch(`${API}/api/sources`);
+    const data = await res.json();
+    setSources(data.map((s: any) => ({ id: s.id, url: s.url, label: s.label })));
+  }, []);
+
+  // フィード取得
   const fetchAll = useCallback(async () => {
-    if (sources.length === 0) {
-      setEntries([]);
-      return;
-    }
     setLoading(true);
     try {
-      const results = await Promise.allSettled(sources.map(fetchRSS));
-      const flat = results
-        .filter((r): r is PromiseFulfilledResult<FeedEntry[]> => r.status === 'fulfilled')
-        .flatMap((r) => r.value)
-        .sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
-
-      setEntries((prev) => {
-        const bookmarked = new Set(prev.filter((e) => e.bookmarked).map((e) => e.id));
-        return flat.map((e) => ({ ...e, bookmarked: bookmarked.has(e.id) }));
-      });
+      const res = await fetch(`${API}/api/feed`);
+      const data = await res.json();
+      setEntries(data);
     } finally {
       setLoading(false);
     }
-  }, [sources]);
+  }, []);
 
-  // 起動時 & sources変更時に自動取得
+  // 起動時に取得
   useEffect(() => {
+    fetchSources();
     fetchAll();
-  }, [fetchAll]);
-
-  // フィード削除時に記事も即座に消す
-  useEffect(() => {
-    const ids = new Set(sources.map((s) => s.id));
-    setEntries((prev) => prev.filter((e) => ids.has(e.sourceId)));
-  }, [sources]);
+  }, [fetchSources, fetchAll]);
 
   // 5分ごとに自動更新
   useEffect(() => {
-    if (sources.length === 0) return;
     const interval = setInterval(fetchAll, 5 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [fetchAll, sources]);
+  }, [fetchAll]);
 
-  const toggleBookmark = (id: string) => {
-    setEntries((prev) =>
-      prev.map((e) => (e.id === id ? { ...e, bookmarked: !e.bookmarked } : e))
+  // ソース追加
+  const addSource = async (source: FeedSource) => {
+    await fetch(`${API}/api/sources`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(source),
+    });
+    await fetchSources();
+    await fetchAll();
+  };
+
+  // ソース削除
+  const removeSource = async (id: string) => {
+    await fetch(`${API}/api/sources/${id}`, { method: 'DELETE' });
+    setSources(prev => prev.filter(s => s.id !== id));
+    setEntries(prev => prev.filter(e => e.sourceId !== id));
+  };
+
+  // ブックマーク切り替え
+  const toggleBookmark = async (entry: FeedEntry) => {
+    if (entry.bookmarked) {
+      await fetch(`${API}/api/bookmarks/${entry.id}`, { method: 'DELETE' });
+    } else {
+      await fetch(`${API}/api/bookmarks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(entry),
+      });
+    }
+    setEntries(prev =>
+      prev.map(e => e.id === entry.id ? { ...e, bookmarked: !e.bookmarked } : e)
     );
   };
 
-  return { entries, loading, toggleBookmark, refresh: fetchAll };
+  return { sources, entries, loading, addSource, removeSource, toggleBookmark, refresh: fetchAll };
 }

@@ -3,7 +3,7 @@ import type { FeedEntry } from '../types';
 interface Props {
   entries: FeedEntry[];
   loading: boolean;
-  onToggleBookmark: (id: string) => void;
+  onToggleBookmark: (entry: FeedEntry) => void;
 }
 
 function SkeletonRow() {
@@ -38,13 +38,13 @@ export function FeedList({ entries, loading, onToggleBookmark }: Props) {
       <table className="feed-table">
         <thead>
           <tr>
-            {['Title', 'Source', 'Date', '★'].map((h) => (
+            {['Title', 'Source', 'Date', '★'].map(h => (
               <th key={h}>{h}</th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {entries.map((entry) => (
+          {entries.map(entry => (
             <tr key={entry.id}>
               <td>
                 <a href={entry.link} target="_blank" rel="noopener noreferrer">
@@ -60,7 +60,7 @@ export function FeedList({ entries, loading, onToggleBookmark }: Props) {
               <td>
                 <button
                   className={`bookmark-btn ${entry.bookmarked ? 'active' : ''}`}
-                  onClick={() => onToggleBookmark(entry.id)}
+                  onClick={() => onToggleBookmark(entry)}
                 >
                   {entry.bookmarked ? '★' : '☆'}
                 </button>
