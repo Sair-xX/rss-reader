@@ -7,23 +7,22 @@ import { FeedList } from './components/FeedList';
 export default function App() {
   const [showBookmarked, setShowBookmarked] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const {
-    sources,
-    entries,
-    loading,
-    addSource,
-    removeSource,
+    sources, entries, allTags, loading,
+    addSource, removeSource,
     toggleBookmark,
+    addTag, removeTag,
     refresh,
   } = useFeed();
 
   const displayed = entries
     .filter(e => !showBookmarked || e.bookmarked)
-    .filter(e =>
-      !searchQuery ||
+    .filter(e => !searchQuery ||
       e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       e.source.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    )
+    .filter(e => !selectedTag || e.tags.includes(selectedTag));
 
   return (
     <div className="app">
@@ -40,8 +39,17 @@ export default function App() {
         onRefresh={refresh}
         loading={loading}
         count={displayed.length}
+        allTags={allTags}
+        selectedTag={selectedTag}
+        onSelectTag={tag => setSelectedTag(prev => prev === tag ? null : tag)}
       />
-      <FeedList entries={displayed} loading={loading} onToggleBookmark={toggleBookmark} />
+      <FeedList
+        entries={displayed}
+        loading={loading}
+        onToggleBookmark={toggleBookmark}
+        onAddTag={addTag}
+        onRemoveTag={removeTag}
+      />
     </div>
   );
 }

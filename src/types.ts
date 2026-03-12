@@ -6,6 +6,7 @@ export type FeedEntry = {
   sourceId: string;
   pubDate: string;
   bookmarked: boolean;
+  tags: string[];
 };
 
 export type FeedSource = {

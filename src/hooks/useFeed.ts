@@ -6,40 +6,56 @@ const API = 'https://rss-reader-server-production-38dc.up.railway.app';
 export function useFeed() {
   const [sources, setSources] = useState<FeedSource[]>([]);
   const [entries, setEntries] = useState<FeedEntry[]>([]);
+  const [allTags, setAllTags] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // ソース一覧取得
   const fetchSources = useCallback(async () => {
     const res = await fetch(`${API}/api/sources`);
     const data = await res.json();
     setSources(data.map((s: any) => ({ id: s.id, url: s.url, label: s.label })));
   }, []);
 
-  // フィード取得
+  const fetchTags = useCallback(async () => {
+    const res = await fetch(`${API}/api/tags`);
+    const data = await res.json();
+    setAllTags(data);
+  }, []);
+
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API}/api/feed`);
-      const data = await res.json();
-      setEntries(data);
+      const [feedRes, tagsRes] = await Promise.all([
+        fetch(`${API}/api/feed`),
+        fetch(`${API}/api/tags`),
+      ]);
+      const feedData = await feedRes.json();
+      const tagsData: string[] = await tagsRes.json();
+      setAllTags(tagsData);
+
+      // 各記事のタグを取得
+      const entriesWithTags = await Promise.all(
+        feedData.map(async (entry: FeedEntry) => {
+          const res = await fetch(`${API}/api/tags/${entry.id}`);
+          const tags = await res.json();
+          return { ...entry, tags: tags.map((t: any) => t.tag) };
+        })
+      );
+      setEntries(entriesWithTags);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // 起動時に取得
   useEffect(() => {
     fetchSources();
     fetchAll();
   }, [fetchSources, fetchAll]);
 
-  // 5分ごとに自動更新
   useEffect(() => {
     const interval = setInterval(fetchAll, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, [fetchAll]);
 
-  // ソース追加
   const addSource = async (source: FeedSource) => {
     await fetch(`${API}/api/sources`, {
       method: 'POST',
@@ -50,14 +66,12 @@ export function useFeed() {
     await fetchAll();
   };
 
-  // ソース削除
   const removeSource = async (id: string) => {
     await fetch(`${API}/api/sources/${id}`, { method: 'DELETE' });
     setSources(prev => prev.filter(s => s.id !== id));
     setEntries(prev => prev.filter(e => e.sourceId !== id));
   };
 
-  // ブックマーク切り替え
   const toggleBookmark = async (entry: FeedEntry) => {
     if (entry.bookmarked) {
       await fetch(`${API}/api/bookmarks/${entry.id}`, { method: 'DELETE' });
@@ -73,5 +87,34 @@ export function useFeed() {
     );
   };
 
-  return { sources, entries, loading, addSource, removeSource, toggleBookmark, refresh: fetchAll };
+  const addTag = async (articleId: string, tag: string) => {
+    await fetch(`${API}/api/tags`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ articleId, tag }),
+    });
+    setEntries(prev =>
+      prev.map(e => e.id === articleId ? { ...e, tags: [...e.tags, tag] } : e)
+    );
+    setAllTags(prev => prev.includes(tag) ? prev : [...prev, tag].sort());
+  };
+
+  const removeTag = async (articleId: string, tag: string) => {
+    await fetch(`${API}/api/tags`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ articleId, tag }),
+    });
+    setEntries(prev =>
+      prev.map(e => e.id === articleId ? { ...e, tags: e.tags.filter(t => t !== tag) } : e)
+    );
+  };
+
+  return {
+    sources, entries, allTags, loading,
+    addSource, removeSource,
+    toggleBookmark,
+    addTag, removeTag,
+    refresh: fetchAll,
+  };
 }

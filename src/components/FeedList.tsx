@@ -1,9 +1,12 @@
+import { useState } from 'react';
 import type { FeedEntry } from '../types';
 
 interface Props {
   entries: FeedEntry[];
   loading: boolean;
   onToggleBookmark: (entry: FeedEntry) => void;
+  onAddTag: (articleId: string, tag: string) => void;
+  onRemoveTag: (articleId: string, tag: string) => void;
 }
 
 function SkeletonRow() {
@@ -15,7 +18,40 @@ function SkeletonRow() {
   );
 }
 
-export function FeedList({ entries, loading, onToggleBookmark }: Props) {
+function TagInput({ entry, onAddTag, onRemoveTag }: {
+  entry: FeedEntry;
+  onAddTag: (articleId: string, tag: string) => void;
+  onRemoveTag: (articleId: string, tag: string) => void;
+}) {
+  const [input, setInput] = useState('');
+
+  const handleAdd = () => {
+    const trimmed = input.trim();
+    if (!trimmed || entry.tags.includes(trimmed)) return;
+    onAddTag(entry.id, trimmed);
+    setInput('');
+  };
+
+  return (
+    <div className="tag-cell">
+      {entry.tags.map(tag => (
+        <span key={tag} className="tag">
+          {tag}
+          <button className="tag-remove" onClick={() => onRemoveTag(entry.id, tag)}>×</button>
+        </span>
+      ))}
+      <input
+        className="tag-input"
+        value={input}
+        onChange={e => setInput(e.target.value)}
+        onKeyDown={e => e.key === 'Enter' && handleAdd()}
+        placeholder="+ タグ"
+      />
+    </div>
+  );
+}
+
+export function FeedList({ entries, loading, onToggleBookmark, onAddTag, onRemoveTag }: Props) {
   if (loading) {
     return (
       <section className="panel">
@@ -38,7 +74,7 @@ export function FeedList({ entries, loading, onToggleBookmark }: Props) {
       <table className="feed-table">
         <thead>
           <tr>
-            {['Title', 'Source', 'Date', '★'].map(h => (
+            {['Title', 'Source', 'Date', 'Tags', '★'].map(h => (
               <th key={h}>{h}</th>
             ))}
           </tr>
@@ -56,6 +92,9 @@ export function FeedList({ entries, loading, onToggleBookmark }: Props) {
               </td>
               <td className="date-cell">
                 {new Date(entry.pubDate).toLocaleDateString('ja-JP')}
+              </td>
+              <td>
+                <TagInput entry={entry} onAddTag={onAddTag} onRemoveTag={onRemoveTag} />
               </td>
               <td>
                 <button

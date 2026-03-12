@@ -295,3 +295,84 @@ input[type=checkbox] { accent-color: #d946ef; }
   75%  { color: #a5b4fc; border-color: #818cf8; text-shadow: 0 0 12px #818cf8, 0 0 40px #6366f1aa; box-shadow: 0 0 20px #6366f155, 0 0 50px #6366f122, inset 0 0 15px #6366f122; }
   100% { color: #f0abfc; border-color: #e879f9; text-shadow: 0 0 12px #e879f9, 0 0 40px #d946efaa; box-shadow: 0 0 20px #d946ef55, 0 0 50px #d946ef22, inset 0 0 15px #d946ef22; }
 }
+/* Tag filter */
+.tag-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-top: .75rem;
+}
+
+.tag-btn {
+  font-size: .6rem;
+  padding: .25rem .6rem;
+  border-radius: 20px;
+  letter-spacing: .1em;
+  animation: none;
+  color: #a78bfa;
+  border-color: #7c3aed44;
+  box-shadow: none;
+  text-shadow: none;
+}
+.tag-btn:hover:not(:disabled) {
+  background: #7c3aed22;
+  box-shadow: 0 0 10px #7c3aed33;
+}
+.tag-btn.active {
+  background: #7c3aed33;
+  border-color: #a855f7;
+  color: #e879f9;
+  text-shadow: 0 0 8px #e879f9;
+  box-shadow: 0 0 10px #a855f733;
+}
+
+/* Tag cell */
+.tag-cell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .3rem;
+  align-items: center;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: .2rem;
+  padding: .15rem .5rem;
+  background: #7c3aed15;
+  border: 1px solid #7c3aed44;
+  border-radius: 20px;
+  color: #c4b5fd;
+  font-size: .7rem;
+}
+
+.tag-remove {
+  border: none;
+  background: none;
+  color: #7c3aed88;
+  font-size: .7rem;
+  padding: 0;
+  cursor: pointer;
+  line-height: 1;
+  box-shadow: none;
+  text-shadow: none;
+  animation: none;
+}
+.tag-remove:hover {
+  color: #ff4466;
+  box-shadow: none;
+}
+
+.tag-input {
+  width: 60px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #7c3aed44;
+  color: #c4b5fd;
+  font-size: .7rem;
+  padding: .1rem .2rem;
+  outline: none;
+  font-family: 'Share Tech Mono', monospace;
+}
+.tag-input::placeholder { color: #7c3aed44; }
+.tag-input:focus { border-bottom-color: #a855f7; }
