@@ -1,3 +1,5 @@
+import React from 'react';
+
 interface Props {
   searchQuery: string;
   onSearchChange: (v: string) => void;
