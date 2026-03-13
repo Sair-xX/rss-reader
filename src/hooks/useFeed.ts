@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type { FeedEntry, FeedSource } from '../types';
 
 const API = 'https://rss-reader-server-production-344f.up.railway.app';
@@ -12,53 +12,70 @@ type FeedResponse = {
   totalPages: number;
 };
 
+type SourceResponseItem = {
+  id: string;
+  url: string;
+  label: string;
+};
+
 interface UseFeedOptions {
   onUnauthorized?: () => void;
+  enabled?: boolean;
 }
 
 const extractAllTags = (items: FeedEntry[]) =>
   [...new Set(items.flatMap((item) => item.tags ?? []))].sort();
 
 export function useFeed(options: UseFeedOptions = {}) {
-  const { onUnauthorized } = options;
+  const { onUnauthorized, enabled = true } = options;
+  const onUnauthorizedRef = useRef(onUnauthorized);
+
+  useEffect(() => {
+    onUnauthorizedRef.current = onUnauthorized;
+  }, [onUnauthorized]);
+
   const [sources, setSources] = useState<FeedSource[]>([]);
   const [entries, setEntries] = useState<FeedEntry[]>([]);
   const [allTags, setAllTags] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const apiFetch = useCallback(
-    async (url: string, init?: RequestInit) => {
-      const res = await fetch(url, {
-        ...init,
-        credentials: 'include',
-      });
+  const apiFetch = useCallback(async (url: string, init?: RequestInit) => {
+    const res = await fetch(url, {
+      ...init,
+      credentials: 'include',
+    });
 
-      if (res.status === 401) {
-        onUnauthorized?.();
-        throw new Error('unauthorized');
-      }
+    if (res.status === 401) {
+      onUnauthorizedRef.current?.();
+      throw new Error('unauthorized');
+    }
 
-      return res;
-    },
-    [onUnauthorized]
-  );
+    if (!res.ok) {
+      throw new Error('request_failed');
+    }
+
+    return res;
+  }, []);
 
   const fetchSources = useCallback(async () => {
     try {
       const res = await apiFetch(`${API}/api/sources`);
-      const data = await res.json();
-      setSources(data.map((s: any) => ({ id: s.id, url: s.url, label: s.label })));
-    } catch (error) {
-      if ((error as Error).message !== 'unauthorized') throw error;
+      const data: SourceResponseItem[] = await res.json();
+      setSources(data.map((s) => ({ id: s.id, url: s.url, label: s.label })));
+    } catch (fetchError) {
+      if ((fetchError as Error).message !== 'unauthorized') throw fetchError;
     }
   }, [apiFetch]);
 
   const fetchFeed = useCallback(async (page: number, q: string) => {
     setLoading(true);
+    setError(null);
+
     try {
       const params = new URLSearchParams();
       params.set('page', String(page));
@@ -84,22 +101,30 @@ export function useFeed(options: UseFeedOptions = {}) {
 
       setEntries(feedItems);
       setAllTags(extractAllTags(feedItems));
-    } catch (error) {
-      if ((error as Error).message !== 'unauthorized') throw error;
+    } catch (fetchError) {
+      if ((fetchError as Error).message === 'unauthorized') return;
+      setError('記事の取得に失敗しました。時間をおいて再試行してください。');
     } finally {
       setLoading(false);
     }
   }, [apiFetch]);
 
   useEffect(() => {
+    if (!enabled) {
+      setLoading(false);
+      return;
+    }
+
     fetchSources();
     fetchFeed(1, '');
-  }, [fetchSources, fetchFeed]);
+  }, [enabled, fetchSources, fetchFeed]);
 
   useEffect(() => {
+    if (!enabled) return;
+
     const interval = setInterval(() => fetchFeed(currentPage, searchQuery), 5 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [fetchFeed, currentPage, searchQuery]);
+  }, [enabled, fetchFeed, currentPage, searchQuery]);
 
   const addSource = async (source: FeedSource) => {
     await apiFetch(`${API}/api/sources`, {
@@ -174,7 +199,7 @@ export function useFeed(options: UseFeedOptions = {}) {
   }, [fetchFeed, currentPage, searchQuery]);
 
   return {
-    sources, entries, allTags, loading,
+    sources, entries, allTags, loading, error,
     total, totalPages, currentPage, searchQuery,
     addSource, removeSource,
     toggleBookmark,
