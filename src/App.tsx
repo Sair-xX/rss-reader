@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useFeed } from './hooks/useFeed';
 import { FeedRegistration } from './components/FeedRegistration';
 import { FilterBar } from './components/FilterBar';
