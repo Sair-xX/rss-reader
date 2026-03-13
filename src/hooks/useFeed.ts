@@ -26,6 +26,9 @@ interface UseFeedOptions {
 const extractAllTags = (items: FeedEntry[]) =>
   [...new Set(items.flatMap((item) => item.tags ?? []))].sort();
 
+const toFeedEntries = (value: unknown): FeedEntry[] =>
+  Array.isArray(value) ? (value as FeedEntry[]) : [];
+
 export function useFeed(options: UseFeedOptions = {}) {
   const { onUnauthorized, enabled = true } = options;
   const onUnauthorizedRef = useRef(onUnauthorized);
@@ -118,9 +121,9 @@ export function useFeed(options: UseFeedOptions = {}) {
 
     try {
       const res = await apiFetch(`${API}/api/bookmarks`);
-      const bookmarkItems: FeedEntry[] = await res.json();
-      setBookmarks(Array.isArray(bookmarkItems) ? bookmarkItems : []);
-      setBookmarkTags(extractAllTags(Array.isArray(bookmarkItems) ? bookmarkItems : []));
+      const bookmarkItems = toFeedEntries(await res.json());
+      setBookmarks(bookmarkItems);
+      setBookmarkTags(extractAllTags(bookmarkItems));
     } catch (fetchError) {
       if ((fetchError as Error).message === 'unauthorized') return;
       setError('ブックマークの取得に失敗しました。時間をおいて再試行してください。');
@@ -176,14 +179,13 @@ export function useFeed(options: UseFeedOptions = {}) {
       return list.filter((e) => e.id !== entry.id);
     };
 
+    const nextBookmarks = updateBookmarkList(bookmarks, nextBookmarked);
+
     setEntries(prev =>
       prev.map(e => e.id === entry.id ? { ...e, bookmarked: nextBookmarked } : e)
     );
-    setBookmarks(prev => {
-      const next = updateBookmarkList(prev, nextBookmarked);
-      setBookmarkTags(extractAllTags(next));
-      return next;
-    });
+    setBookmarks(nextBookmarks);
+    setBookmarkTags(extractAllTags(nextBookmarks));
 
     setBookmarkPendingIds(prev => {
       const next = new Set(prev);
@@ -202,14 +204,12 @@ export function useFeed(options: UseFeedOptions = {}) {
         });
       }
     } catch (toggleError) {
+      const rollbackBookmarks = updateBookmarkList(nextBookmarks, entry.bookmarked);
       setEntries(prev =>
         prev.map(e => e.id === entry.id ? { ...e, bookmarked: entry.bookmarked } : e)
       );
-      setBookmarks(prev => {
-        const next = updateBookmarkList(prev, entry.bookmarked);
-        setBookmarkTags(extractAllTags(next));
-        return next;
-      });
+      setBookmarks(rollbackBookmarks);
+      setBookmarkTags(extractAllTags(rollbackBookmarks));
       if ((toggleError as Error).message !== 'unauthorized') {
         setError('ブックマーク更新に失敗しました。もう一度お試しください。');
       }
@@ -252,11 +252,9 @@ export function useFeed(options: UseFeedOptions = {}) {
     setEntries(prev =>
       prev.map(e => e.id === articleId ? { ...e, tags: e.tags.filter(t => t !== tag) } : e)
     );
-    setBookmarks(prev => {
-      const next = prev.map(e => e.id === articleId ? { ...e, tags: e.tags.filter(t => t !== tag) } : e);
-      setBookmarkTags(extractAllTags(next));
-      return next;
-    });
+    const nextBookmarks = bookmarks.map(e => e.id === articleId ? { ...e, tags: e.tags.filter(t => t !== tag) } : e);
+    setBookmarks(nextBookmarks);
+    setBookmarkTags(extractAllTags(nextBookmarks));
   };
 
   const search = useCallback((q: string) => {
