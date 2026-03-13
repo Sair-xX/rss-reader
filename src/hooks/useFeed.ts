@@ -30,22 +30,31 @@ export function useFeed(options: UseFeedOptions = {}) {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const apiFetch = useCallback(async (url: string, init?: RequestInit) => {
-    const res = await fetch(url, {
-      ...init,
-      credentials: 'include',
-    });
-    if (res.status === 401) {
-      onUnauthorized?.();
-      throw new Error('unauthorized');
-    }
-    return res;
-  }, [onUnauthorized]);
+  const apiFetch = useCallback(
+    async (url: string, init?: RequestInit) => {
+      const res = await fetch(url, {
+        ...init,
+        credentials: 'include',
+      });
+
+      if (res.status === 401) {
+        onUnauthorized?.();
+        throw new Error('unauthorized');
+      }
+
+      return res;
+    },
+    [onUnauthorized]
+  );
 
   const fetchSources = useCallback(async () => {
-    const res = await apiFetch(`${API}/api/sources`);
-    const data = await res.json();
-    setSources(data.map((s: any) => ({ id: s.id, url: s.url, label: s.label })));
+    try {
+      const res = await apiFetch(`${API}/api/sources`);
+      const data = await res.json();
+      setSources(data.map((s: any) => ({ id: s.id, url: s.url, label: s.label })));
+    } catch (error) {
+      if ((error as Error).message !== 'unauthorized') throw error;
+    }
   }, [apiFetch]);
 
   const fetchFeed = useCallback(async (page: number, q: string) => {
@@ -118,6 +127,7 @@ export function useFeed(options: UseFeedOptions = {}) {
         body: JSON.stringify(entry),
       });
     }
+
     setEntries(prev =>
       prev.map(e => e.id === entry.id ? { ...e, bookmarked: !e.bookmarked } : e)
     );
@@ -129,6 +139,7 @@ export function useFeed(options: UseFeedOptions = {}) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ articleId, tag }),
     });
+
     setEntries(prev =>
       prev.map(e => e.id === articleId ? { ...e, tags: [...e.tags, tag] } : e)
     );
@@ -141,6 +152,7 @@ export function useFeed(options: UseFeedOptions = {}) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ articleId, tag }),
     });
+
     setEntries(prev =>
       prev.map(e => e.id === articleId ? { ...e, tags: e.tags.filter(t => t !== tag) } : e)
     );

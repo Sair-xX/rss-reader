@@ -10,6 +10,19 @@ interface Props {
   onUnauthorized?: () => void;
 }
 
+const TAG_TONE_COUNT = 8;
+
+function getTagToneIndex(tag: string) {
+  let hash = 0;
+  const normalized = tag.trim().toLowerCase();
+
+  for (let i = 0; i < normalized.length; i += 1) {
+    hash = ((hash << 5) - hash + normalized.charCodeAt(i)) | 0;
+  }
+
+  return Math.abs(hash) % TAG_TONE_COUNT;
+}
+
 function SkeletonRow() {
   return (
     <div className="skeleton-row">
@@ -35,12 +48,16 @@ function TagInput({ entry, onAddTag, onRemoveTag }: {
 
   return (
     <div className="tag-cell">
-      {entry.tags.map(tag => (
-        <span key={tag} className="tag">
-          {tag}
-          <button className="tag-remove" onClick={() => onRemoveTag(entry.id, tag)}>×</button>
-        </span>
-      ))}
+      {entry.tags.map(tag => {
+        const tone = getTagToneIndex(tag);
+
+        return (
+          <span key={tag} className={`tag tag-tone-${tone}`}>
+            {tag}
+            <button className="tag-remove" onClick={() => onRemoveTag(entry.id, tag)}>×</button>
+          </span>
+        );
+      })}
       <input
         className="tag-input"
         value={input}

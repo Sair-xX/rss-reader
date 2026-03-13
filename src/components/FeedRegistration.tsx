@@ -10,6 +10,9 @@ const RSS_PRESETS = [
       { label: 'Physics World', url: 'https://physicsworld.com/feed/' },
       { label: 'APS Physics Magazine', url: 'https://physics.aps.org/feed' },
       { label: 'Nature Physics', url: 'https://www.nature.com/nphys.rss' },
+      { label: 'Physics Today', url: 'https://physicstoday.scitation.org/action/showFeed?type=etoc&feed=rss&jc=pto' },
+      { label: 'CERN News', url: 'https://home.cern/api/news/opendata.rss' },
+      { label: 'Quanta Magazine (Physics)', url: 'https://www.quantamagazine.org/tag/physics/feed/' },
     ],
   },
   {
@@ -18,6 +21,9 @@ const RSS_PRESETS = [
       { label: 'IMF Blog', url: 'https://www.imf.org/en/Blogs/rss' },
       { label: 'World Bank Blogs', url: 'https://blogs.worldbank.org/rss.xml' },
       { label: 'NBER Digest', url: 'https://www.nber.org/rss/digest.xml' },
+      { label: 'OECD Insights', url: 'https://oecdinsights.org/feed/' },
+      { label: 'VoxEU', url: 'https://cepr.org/voxeu/rss.xml' },
+      { label: 'Econbrowser', url: 'https://econbrowser.com/feed' },
     ],
   },
   {
@@ -26,6 +32,9 @@ const RSS_PRESETS = [
       { label: 'Hacker News', url: 'https://hnrss.org/frontpage' },
       { label: 'Google AI Blog', url: 'https://blog.google/technology/ai/rss/' },
       { label: 'InfoQ', url: 'https://feed.infoq.com/' },
+      { label: 'GitHub Blog', url: 'https://github.blog/feed/' },
+      { label: 'The Verge (Tech)', url: 'https://www.theverge.com/rss/tech/index.xml' },
+      { label: 'AWS News Blog', url: 'https://aws.amazon.com/blogs/aws/feed/' },
     ],
   },
   {
@@ -34,6 +43,9 @@ const RSS_PRESETS = [
       { label: 'Nature Biotechnology', url: 'https://www.nature.com/nbt.rss' },
       { label: 'PLOS Biology', url: 'https://journals.plos.org/plosbiology/feed/atom' },
       { label: 'Cell Press', url: 'https://www.cell.com/cell/current.rss' },
+      { label: 'Nature Ecology & Evolution', url: 'https://www.nature.com/natecolevol.rss' },
+      { label: 'Genome Biology', url: 'https://genomebiology.biomedcentral.com/articles/rss.xml' },
+      { label: 'The Scientist', url: 'https://www.the-scientist.com/feed' },
     ],
   },
 ] as const;
@@ -48,6 +60,9 @@ export function FeedRegistration({ sources, onAdd, onRemove }: Props) {
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPresets, setShowPresets] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [showSources, setShowSources] = useState(false);
 
   const handleAdd = async () => {
     if (!url.trim() || loading) return;
@@ -119,41 +134,74 @@ export function FeedRegistration({ sources, onAdd, onRemove }: Props) {
         </button>
       </div>
       <div style={{ marginTop: 12 }}>
-        <div style={{ fontSize: '.72rem', color: '#a78bfa', marginBottom: 8 }}>分野から選ぶ（おすすめRSS）</div>
-        <div style={{ display: 'grid', gap: 8 }}>
-          {RSS_PRESETS.map((group) => (
-            <div key={group.category}>
-              <div style={{ fontSize: '.7rem', color: '#7c3aedaa', marginBottom: 6 }}>{group.category}</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {group.items.map((item) => (
-                  <button
-                    type="button"
-                    key={item.url}
-                    disabled={loading}
-                    onClick={() => handleAddPreset(item)}
-                    style={{ textTransform: 'none', letterSpacing: '.05em' }}
-                  >
-                    + {item.label}
-                  </button>
-                ))}
-              </div>
+        <button
+          type="button"
+          onClick={() => {
+            setShowPresets((prev) => !prev);
+            if (showPresets) setSelectedCategory(null);
+          }}
+        >
+          {showPresets ? 'おすすめRSSを閉じる' : 'おすすめRSS'}
+        </button>
+        {showPresets && (
+          <div style={{ display: 'grid', gap: 8, marginTop: 8 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {RSS_PRESETS.map((group) => (
+                <button
+                  key={group.category}
+                  type="button"
+                  onClick={() => setSelectedCategory(group.category)}
+                  style={{
+                    textTransform: 'none',
+                    letterSpacing: '.05em',
+                    opacity: selectedCategory === group.category ? 1 : 0.85,
+                  }}
+                >
+                  {group.category}
+                </button>
+              ))}
             </div>
-          ))}
-        </div>
+            {selectedCategory && (
+              <div>
+                <div style={{ fontSize: '.7rem', color: '#7c3aedaa', marginBottom: 6 }}>{selectedCategory}の候補</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {RSS_PRESETS.find((group) => group.category === selectedCategory)?.items.map((item) => (
+                    <button
+                      type="button"
+                      key={item.url}
+                      disabled={loading}
+                      onClick={() => handleAddPreset(item)}
+                      style={{ textTransform: 'none', letterSpacing: '.05em' }}
+                    >
+                      + {item.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
       {error && <p style={{ color: '#ff6b6b', marginTop: 8 }}>{error}</p>}
       {sources.length > 0 && (
-        <ul className="source-list">
-          {sources.map((s) => (
-            <li key={s.id} className="source-item">
-              <span>
-                <span className="source-label">{s.label}</span>
-                <span className="source-url">{s.url}</span>
-              </span>
-              <button className="btn-danger" onClick={() => onRemove(s.id)}>削除</button>
-            </li>
-          ))}
-        </ul>
+        <div style={{ marginTop: 10 }}>
+          <button type="button" onClick={() => setShowSources((prev) => !prev)}>
+            {showSources ? '追加済みRSS一覧を隠す' : `追加済みRSS一覧を表示 (${sources.length})`}
+          </button>
+          {showSources && (
+            <ul className="source-list" style={{ marginTop: 8 }}>
+              {sources.map((s) => (
+                <li key={s.id} className="source-item">
+                  <span>
+                    <span className="source-label">{s.label}</span>
+                    <span className="source-url">{s.url}</span>
+                  </span>
+                  <button className="btn-danger" onClick={() => onRemove(s.id)}>削除</button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       )}
     </section>
   );
