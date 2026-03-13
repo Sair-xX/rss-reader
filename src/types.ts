@@ -1,6 +1,7 @@
 export type FeedEntry = {
   id: string;
   title: string;
+  content?: string;
   link: string;
   source: string;
   sourceId: string;
