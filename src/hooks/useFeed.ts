@@ -36,7 +36,9 @@ export function useFeed(options: UseFeedOptions = {}) {
 
   const [sources, setSources] = useState<FeedSource[]>([]);
   const [entries, setEntries] = useState<FeedEntry[]>([]);
+  const [bookmarks, setBookmarks] = useState<FeedEntry[]>([]);
   const [allTags, setAllTags] = useState<string[]>([]);
+  const [bookmarkTags, setBookmarkTags] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [bookmarkPendingIds, setBookmarkPendingIds] = useState<Set<string>>(new Set());
@@ -110,6 +112,23 @@ export function useFeed(options: UseFeedOptions = {}) {
     }
   }, [apiFetch]);
 
+  const fetchBookmarks = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const res = await apiFetch(`${API}/api/bookmarks`);
+      const bookmarkItems: FeedEntry[] = await res.json();
+      setBookmarks(Array.isArray(bookmarkItems) ? bookmarkItems : []);
+      setBookmarkTags(extractAllTags(Array.isArray(bookmarkItems) ? bookmarkItems : []));
+    } catch (fetchError) {
+      if ((fetchError as Error).message === 'unauthorized') return;
+      setError('ブックマークの取得に失敗しました。時間をおいて再試行してください。');
+    } finally {
+      setLoading(false);
+    }
+  }, [apiFetch]);
+
   useEffect(() => {
     if (!enabled) {
       setLoading(false);
@@ -118,7 +137,8 @@ export function useFeed(options: UseFeedOptions = {}) {
 
     fetchSources();
     fetchFeed(1, '');
-  }, [enabled, fetchSources, fetchFeed]);
+    fetchBookmarks();
+  }, [enabled, fetchSources, fetchFeed, fetchBookmarks]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -145,10 +165,25 @@ export function useFeed(options: UseFeedOptions = {}) {
 
   const toggleBookmark = async (entry: FeedEntry) => {
     const nextBookmarked = !entry.bookmarked;
+    const updateBookmarkList = (list: FeedEntry[], bookmarked: boolean) => {
+      if (bookmarked) {
+        const alreadyBookmarked = list.some((e) => e.id === entry.id);
+        if (alreadyBookmarked) {
+          return list.map((e) => e.id === entry.id ? { ...e, bookmarked: true } : e);
+        }
+        return [{ ...entry, bookmarked: true }, ...list];
+      }
+      return list.filter((e) => e.id !== entry.id);
+    };
 
     setEntries(prev =>
       prev.map(e => e.id === entry.id ? { ...e, bookmarked: nextBookmarked } : e)
     );
+    setBookmarks(prev => {
+      const next = updateBookmarkList(prev, nextBookmarked);
+      setBookmarkTags(extractAllTags(next));
+      return next;
+    });
 
     setBookmarkPendingIds(prev => {
       const next = new Set(prev);
@@ -170,6 +205,11 @@ export function useFeed(options: UseFeedOptions = {}) {
       setEntries(prev =>
         prev.map(e => e.id === entry.id ? { ...e, bookmarked: entry.bookmarked } : e)
       );
+      setBookmarks(prev => {
+        const next = updateBookmarkList(prev, entry.bookmarked);
+        setBookmarkTags(extractAllTags(next));
+        return next;
+      });
       if ((toggleError as Error).message !== 'unauthorized') {
         setError('ブックマーク更新に失敗しました。もう一度お試しください。');
       }
@@ -195,7 +235,11 @@ export function useFeed(options: UseFeedOptions = {}) {
     setEntries(prev =>
       prev.map(e => e.id === articleId ? { ...e, tags: [...e.tags, tag] } : e)
     );
+    setBookmarks(prev =>
+      prev.map(e => e.id === articleId ? { ...e, tags: [...e.tags, tag] } : e)
+    );
     setAllTags(prev => prev.includes(tag) ? prev : [...prev, tag].sort());
+    setBookmarkTags(prev => prev.includes(tag) ? prev : [...prev, tag].sort());
   };
 
   const removeTag = async (articleId: string, tag: string) => {
@@ -208,6 +252,11 @@ export function useFeed(options: UseFeedOptions = {}) {
     setEntries(prev =>
       prev.map(e => e.id === articleId ? { ...e, tags: e.tags.filter(t => t !== tag) } : e)
     );
+    setBookmarks(prev => {
+      const next = prev.map(e => e.id === articleId ? { ...e, tags: e.tags.filter(t => t !== tag) } : e);
+      setBookmarkTags(extractAllTags(next));
+      return next;
+    });
   };
 
   const search = useCallback((q: string) => {
@@ -225,8 +274,12 @@ export function useFeed(options: UseFeedOptions = {}) {
     fetchFeed(currentPage, searchQuery);
   }, [fetchFeed, currentPage, searchQuery]);
 
+  const refreshBookmarks = useCallback(() => {
+    fetchBookmarks();
+  }, [fetchBookmarks]);
+
   return {
-    sources, entries, allTags, loading, error,
+    sources, entries, bookmarks, allTags, bookmarkTags, loading, error,
     total, totalPages, currentPage, searchQuery,
     addSource, removeSource,
     toggleBookmark,
@@ -235,5 +288,6 @@ export function useFeed(options: UseFeedOptions = {}) {
     search,
     goToPage,
     refresh,
+    refreshBookmarks,
   };
 }
