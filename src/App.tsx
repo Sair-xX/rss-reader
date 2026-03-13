@@ -18,7 +18,7 @@ export default function App() {
   const handleUnauthorized = useCallback(() => setUser(null), []);
 
   const {
-    sources, entries, allTags, loading, error,
+    sources, entries, bookmarks, allTags, bookmarkTags, loading, error,
     total, totalPages, currentPage, searchQuery,
     addSource, removeSource,
     toggleBookmark,
@@ -27,6 +27,7 @@ export default function App() {
     search,
     goToPage,
     refresh,
+    refreshBookmarks,
   } = useFeed({ onUnauthorized: handleUnauthorized, enabled: !checkingAuth && !!user });
 
   useEffect(() => {
@@ -62,14 +63,20 @@ export default function App() {
     setUser(null);
   };
 
-  const displayed = entries
-    .filter(e => !showBookmarked || e.bookmarked)
-    .filter(e => !selectedTag || e.tags.includes(selectedTag));
+  const baseEntries = showBookmarked ? bookmarks : entries;
+  const visibleTags = showBookmarked ? bookmarkTags : allTags;
+  const displayed = baseEntries.filter(e => !selectedTag || e.tags.includes(selectedTag));
 
   const rangeStart = total === 0 ? 0 : (currentPage - 1) * PAGE_LIMIT + 1;
   const rangeEnd = Math.min(currentPage * PAGE_LIMIT, total);
-  const showPaging = total > PAGE_LIMIT && totalPages > 1;
+  const showPaging = !showBookmarked && total > PAGE_LIMIT && totalPages > 1;
 
+
+  useEffect(() => {
+    if (selectedTag && !visibleTags.includes(selectedTag)) {
+      setSelectedTag(null);
+    }
+  }, [selectedTag, visibleTags]);
   const handleChangePage = (page: number) => {
     goToPage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -114,10 +121,10 @@ export default function App() {
         onSearchChange={search}
         showBookmarked={showBookmarked}
         onToggle={() => setShowBookmarked(p => !p)}
-        onRefresh={refresh}
+        onRefresh={showBookmarked ? refreshBookmarks : refresh}
         loading={loading}
         count={displayed.length}
-        allTags={allTags}
+        allTags={visibleTags}
         selectedTag={selectedTag}
         onSelectTag={tag => setSelectedTag(tag || null)}
       />
