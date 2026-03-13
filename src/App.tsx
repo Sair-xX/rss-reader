@@ -24,7 +24,14 @@ export default function App() {
     .filter(e => !showBookmarked || e.bookmarked)
     .filter(e => !selectedTag || e.tags.includes(selectedTag));
 
-  const shownCount = Math.min(currentPage * PAGE_LIMIT, total);
+  const rangeStart = total === 0 ? 0 : (currentPage - 1) * PAGE_LIMIT + 1;
+  const rangeEnd = Math.min(currentPage * PAGE_LIMIT, total);
+  const showPaging = total > PAGE_LIMIT && totalPages > 1;
+
+  const handleChangePage = (page: number) => {
+    goToPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   return (
     <div className="app">
@@ -53,12 +60,23 @@ export default function App() {
         onRemoveTag={removeTag}
       />
       <section className="panel">
-        {currentPage < totalPages && (
-          <button type="button" onClick={() => goToPage(currentPage + 1)} disabled={loading}>
-            次の20件を読み込む
-          </button>
+        {showPaging && (
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', justifyContent: 'center', marginTop: '1rem', flexWrap: 'wrap' }}>
+            {currentPage > 1 && (
+              <button type="button" onClick={() => handleChangePage(currentPage - 1)} disabled={loading}>
+                ← 前の20件
+              </button>
+            )}
+            <span style={{ fontSize: '.75rem', color: '#7c3aed88' }}>
+              {rangeStart}〜{rangeEnd} 件 / 全{total}件
+            </span>
+            {currentPage < totalPages && (
+              <button type="button" onClick={() => handleChangePage(currentPage + 1)} disabled={loading}>
+                次の20件 →
+              </button>
+            )}
+          </div>
         )}
-        <p>{total}件中 {shownCount}件表示</p>
       </section>
     </div>
   );
