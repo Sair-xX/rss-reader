@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useFeed } from './hooks/useFeed';
 import { FeedRegistration } from './components/FeedRegistration';
 import { FilterBar } from './components/FilterBar';
@@ -15,7 +15,7 @@ export default function App() {
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [user, setUser] = useState<AuthUser | null>(null);
 
-  const handleUnauthorized = () => setUser(null);
+  const handleUnauthorized = useCallback(() => setUser(null), []);
 
   const {
     sources, entries, allTags, loading,
