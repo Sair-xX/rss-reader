@@ -294,6 +294,13 @@ input[type=checkbox] { accent-color: var(--primary); }
   line-height: 1.45;
 }
 
+.entry-description {
+  margin-top: .4rem;
+  color: #475569;
+  font-size: .82rem;
+  line-height: 1.55;
+}
+
 .summary-actions { margin-top: .55rem; }
 .summary-text {
   margin-top: .55rem;
