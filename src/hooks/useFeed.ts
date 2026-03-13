@@ -158,7 +158,7 @@ export function useFeed(options: UseFeedOptions = {}) {
 
     try {
       if (entry.bookmarked) {
-        await apiFetch(`${API}/api/bookmarks/${entry.id}`, { method: 'DELETE' });
+        await apiFetch(`${API}/api/bookmarks/${encodeURIComponent(entry.id)}`, { method: 'DELETE' });
       } else {
         await apiFetch(`${API}/api/bookmarks`, {
           method: 'POST',
