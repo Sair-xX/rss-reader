@@ -258,18 +258,32 @@ input[type=checkbox] { accent-color: var(--primary); }
 }
 .bookmark-btn {
   border: 1px solid transparent;
+  border-radius: 8px;
   background: none;
   font-size: 1.1rem;
   padding: .15rem .35rem;
   color: #64748b;
+  transition: transform .08s ease-out, color .1s ease-out, text-shadow .1s ease-out, background-color .1s ease-out;
+  transform: scale(1);
+  will-change: transform, color, text-shadow;
 }
 .bookmark-btn:hover:not(:disabled) {
   border-color: #d4ddff;
   background: #f8faff;
 }
+.bookmark-btn:active:not(:disabled),
+.bookmark-btn.pending {
+  transform: scale(1.18);
+}
 .bookmark-btn.active {
   color: var(--gold);
-  text-shadow: 0 0 8px #f59e0b55;
+  text-shadow: 0 0 14px #f59e0b99;
+}
+.bookmark-btn.pending {
+  text-shadow: 0 0 16px #f59e0bcc;
+}
+.bookmark-btn:disabled {
+  cursor: wait;
 }
 
 .skeleton-row {

@@ -6,6 +6,7 @@ interface Props {
   loading: boolean;
   error?: string | null;
   onToggleBookmark: (entry: FeedEntry) => void;
+  isBookmarkPending: (entryId: string) => boolean;
   onAddTag: (articleId: string, tag: string) => void;
   onRemoveTag: (articleId: string, tag: string) => void;
   onUnauthorized?: () => void;
@@ -70,7 +71,7 @@ function TagInput({ entry, onAddTag, onRemoveTag }: {
   );
 }
 
-export function FeedList({ entries, loading, error, onToggleBookmark, onAddTag, onRemoveTag, onUnauthorized }: Props) {
+export function FeedList({ entries, loading, error, onToggleBookmark, isBookmarkPending, onAddTag, onRemoveTag, onUnauthorized }: Props) {
   const [summaries, setSummaries] = useState<Record<string, string>>({});
   const [summaryLoading, setSummaryLoading] = useState<Record<string, boolean>>({});
   const [summaryError, setSummaryError] = useState<Record<string, string>>({});
@@ -180,8 +181,10 @@ export function FeedList({ entries, loading, error, onToggleBookmark, onAddTag, 
               </td>
               <td>
                 <button
-                  className={`bookmark-btn ${entry.bookmarked ? 'active' : ''}`}
+                  className={`bookmark-btn ${entry.bookmarked ? 'active' : ''} ${isBookmarkPending(entry.id) ? 'pending' : ''}`}
                   onClick={() => onToggleBookmark(entry)}
+                  disabled={isBookmarkPending(entry.id)}
+                  aria-label={entry.bookmarked ? 'ブックマーク解除' : 'ブックマーク'}
                 >
                   {entry.bookmarked ? '★' : '☆'}
                 </button>
