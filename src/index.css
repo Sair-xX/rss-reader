@@ -5,13 +5,13 @@
 :root {
   --neon: #d946ef;
   --neon2: #818cf8;
-  --bg: #04020a;
-  --bg-panel: #0a0715;
-  --bg-row: #080512;
+  --bg: #ffffff;
+  --bg-panel: #f8f7ff;
+  --bg-row: #f3f0ff;
   --danger: #ff4466;
   --gold: #fbbf24;
-  --text: #ede9fe;
-  --text-dim: #a78bfa66;
+  --text: #111111;
+  --text-dim: #7c3aed99;
   --border: #7c3aed44;
 }
 
@@ -20,20 +20,21 @@ body {
   color: var(--text);
   font-family: 'Share Tech Mono', monospace;
   min-height: 100vh;
-  background-image: radial-gradient(ellipse at 20% 20%, #2e1065 0%, transparent 50%),
-                    radial-gradient(ellipse at 80% 80%, #1e1b4b 0%, transparent 50%);
+  background-image:
+    radial-gradient(ellipse at 20% 20%, #ede9fe 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, #e0e7ff 0%, transparent 50%);
 }
 
-a { color: #a5b4fc; text-decoration: none; transition: color .2s, text-shadow .2s; }
+a { color: #7c3aed; text-decoration: none; transition: color .2s, text-shadow .2s; }
 a:hover {
-  color: #e879f9;
-  text-shadow: 0 0 8px #d946ef, 0 0 20px #d946ef88, 0 0 40px #d946ef44;
+  color: #d946ef;
+  text-shadow: 0 0 8px #d946ef, 0 0 20px #d946ef88;
 }
 
 input[type=text] {
-  background: #06040f;
+  background: #ffffff;
   border: 1px solid #7c3aed66;
-  color: #ede9fe;
+  color: #111111;
   padding: .5rem .75rem;
   font-family: 'Share Tech Mono', monospace;
   font-size: .85rem;
@@ -50,7 +51,7 @@ input[type=text]:focus {
               0 0 30px #a855f722,
               inset 0 0 10px #a855f711;
 }
-input[type=text]::placeholder { color: #7c3aed44; }
+input[type=text]::placeholder { color: #7c3aed66; }
 
 button {
   background: transparent;
@@ -140,7 +141,7 @@ button:disabled { opacity: .3; cursor: not-allowed; animation: none; color: #555
   margin-right: .75rem;
   text-shadow: 0 0 8px #d946ef88, 0 0 20px #d946ef44;
 }
-.source-url { color: #7c3aed66; }
+.source-url { color: #7c3aed99; }
 
 .btn-danger {
   border-color: #ff446688 !important;
@@ -191,17 +192,17 @@ input[type=checkbox] { accent-color: #d946ef; }
 }
 .feed-table tbody tr { transition: background .15s; border-bottom: 1px solid #0d0a1a; }
 .feed-table tbody tr:hover {
-  background: #110d1f;
+  background: #f3f0ff;
   box-shadow: inset 0 0 20px #7c3aed0a;
 }
-.feed-table tbody td { padding: .65rem .75rem; }
+.feed-table tbody td { padding: .65rem .75rem; color: #111111; }
 
 .summary-actions { margin-top: .45rem; }
 .summary-text {
   margin-top: .45rem;
   margin-bottom: 0;
   font-size: .75rem;
-  color: #ddd6fe;
+  color: #333333;
   white-space: pre-wrap;
   line-height: 1.5;
 }
@@ -222,7 +223,7 @@ input[type=checkbox] { accent-color: #d946ef; }
   font-size: .7rem;
   box-shadow: 0 0 6px #7c3aed22;
 }
-.date-cell { color: #7c3aed66; font-size: .74rem; white-space: nowrap; }
+.date-cell { color: #7c3aed99; font-size: .74rem; white-space: nowrap; }
 .bookmark-btn {
   border: none;
   background: none;
@@ -246,9 +247,50 @@ input[type=checkbox] { accent-color: #d946ef; }
 }
 .skeleton-title, .skeleton-meta {
   border-radius: 2px;
-  background: linear-gradient(90deg, #0a0715 25%, #7c3aed15 50%, #0a0715 75%);
+  background: linear-gradient(90deg, #f3f0ff 25%, #7c3aed15 50%, #f3f0ff 75%);
   background-size: 400px 100%;
   animation: shimmer 1.5s infinite;
+}
+
+@media (max-width: 767px) {
+  .feed-table thead { display: none; }
+
+  .feed-table tbody tr {
+    display: block;
+    border: 1px solid #7c3aed33;
+    border-radius: 6px;
+    margin-bottom: .75rem;
+    padding: .75rem;
+    background: var(--bg-panel);
+    box-shadow: 0 0 12px #7c3aed11;
+  }
+
+  .feed-table tbody td {
+    display: block;
+    padding: .25rem 0;
+    border: none;
+    color: #111111;
+  }
+
+  .feed-table tbody td:first-child {
+    font-size: .9rem;
+    font-weight: bold;
+    margin-bottom: .4rem;
+  }
+
+  .feed-table tbody td:nth-child(2),
+  .feed-table tbody td:nth-child(3) {
+    display: inline-block;
+    margin-right: .75rem;
+    font-size: .75rem;
+  }
+
+  .feed-table tbody td:last-child {
+    text-align: right;
+  }
+
+  .panel { padding: .85rem; }
+  .app { padding: 1rem .75rem; }
 }
 .skeleton-title { height: 13px; width: 65%; }
 .skeleton-meta { height: 10px; width: 28%; animation-delay: .2s; }
