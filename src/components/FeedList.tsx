@@ -7,6 +7,7 @@ interface Props {
   onToggleBookmark: (entry: FeedEntry) => void;
   onAddTag: (articleId: string, tag: string) => void;
   onRemoveTag: (articleId: string, tag: string) => void;
+  onUnauthorized?: () => void;
 }
 
 function SkeletonRow() {
@@ -51,7 +52,7 @@ function TagInput({ entry, onAddTag, onRemoveTag }: {
   );
 }
 
-export function FeedList({ entries, loading, onToggleBookmark, onAddTag, onRemoveTag }: Props) {
+export function FeedList({ entries, loading, onToggleBookmark, onAddTag, onRemoveTag, onUnauthorized }: Props) {
   const [summaries, setSummaries] = useState<Record<string, string>>({});
   const [summaryLoading, setSummaryLoading] = useState<Record<string, boolean>>({});
   const [summaryError, setSummaryError] = useState<Record<string, string>>({});
@@ -67,7 +68,13 @@ export function FeedList({ entries, loading, onToggleBookmark, onAddTag, onRemov
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: entry.title, content }),
+        credentials: 'include',
       });
+
+      if (response.status === 401) {
+        onUnauthorized?.();
+        return;
+      }
 
       if (!response.ok) {
         throw new Error('failed');
