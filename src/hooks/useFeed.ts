@@ -28,7 +28,7 @@ export function useFeed() {
       // 各記事のタグを取得
       const entriesWithTags = await Promise.all(
         feedData.map(async (entry: FeedEntry) => {
-          const res = await fetch(`${API}/api/tags/${entry.id}`);
+          const res = await fetch(`${API}/api/tags/${encodeURIComponent(entry.id)}`);
           const tags = await res.json();
           return { ...entry, tags: tags.map((t: any) => t.tag) };
         })
