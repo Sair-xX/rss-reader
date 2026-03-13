@@ -18,7 +18,7 @@ export default function App() {
   const handleUnauthorized = useCallback(() => setUser(null), []);
 
   const {
-    sources, entries, allTags, loading,
+    sources, entries, allTags, loading, error,
     total, totalPages, currentPage, searchQuery,
     addSource, removeSource,
     toggleBookmark,
@@ -26,7 +26,7 @@ export default function App() {
     search,
     goToPage,
     refresh,
-  } = useFeed({ onUnauthorized: handleUnauthorized });
+  } = useFeed({ onUnauthorized: handleUnauthorized, enabled: !checkingAuth && !!user });
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -123,6 +123,7 @@ export default function App() {
       <FeedList
         entries={displayed}
         loading={loading}
+        error={error}
         onToggleBookmark={toggleBookmark}
         onAddTag={addTag}
         onRemoveTag={removeTag}

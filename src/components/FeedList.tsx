@@ -4,6 +4,7 @@ import type { FeedEntry } from '../types';
 interface Props {
   entries: FeedEntry[];
   loading: boolean;
+  error?: string | null;
   onToggleBookmark: (entry: FeedEntry) => void;
   onAddTag: (articleId: string, tag: string) => void;
   onRemoveTag: (articleId: string, tag: string) => void;
@@ -69,7 +70,7 @@ function TagInput({ entry, onAddTag, onRemoveTag }: {
   );
 }
 
-export function FeedList({ entries, loading, onToggleBookmark, onAddTag, onRemoveTag, onUnauthorized }: Props) {
+export function FeedList({ entries, loading, error, onToggleBookmark, onAddTag, onRemoveTag, onUnauthorized }: Props) {
   const [summaries, setSummaries] = useState<Record<string, string>>({});
   const [summaryLoading, setSummaryLoading] = useState<Record<string, boolean>>({});
   const [summaryError, setSummaryError] = useState<Record<string, string>>({});
@@ -119,10 +120,18 @@ export function FeedList({ entries, loading, onToggleBookmark, onAddTag, onRemov
     );
   }
 
+  if (error) {
+    return (
+      <section className="panel empty-state">
+        {error}
+      </section>
+    );
+  }
+
   if (entries.length === 0) {
     return (
       <section className="panel empty-state">
-        // 記事が見つかりません
+        記事が見つかりません
       </section>
     );
   }
