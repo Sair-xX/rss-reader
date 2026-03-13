@@ -200,11 +200,11 @@ export function FeedRegistration({ sources, onAdd, onRemove }: Props) {
             <ul className="source-list" style={{ marginTop: 8 }}>
               {sources.map((s) => (
                 <li key={s.id} className="source-item">
-                  <span>
+                  <span className="source-main">
                     <span className="source-label">{s.label}</span>
                     <span className="source-url">{s.url}</span>
                   </span>
-                  <button className="btn-danger" onClick={() => onRemove(s.id)}>削除</button>
+                  <button type="button" className="btn-danger source-remove-btn" onClick={() => onRemove(s.id)}>削除</button>
                 </li>
               ))}
             </ul>

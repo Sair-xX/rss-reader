@@ -222,6 +222,16 @@ button:disabled {
 }
 .source-url { color: var(--text-muted); word-break: break-all; }
 
+
+.source-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.source-remove-btn {
+  flex-shrink: 0;
+}
+
 .btn-danger {
   border-color: #fecaca !important;
   color: #b91c1c !important;
