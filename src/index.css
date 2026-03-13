@@ -343,17 +343,24 @@ input[type=checkbox] { accent-color: var(--primary); }
   align-items: center;
   gap: .25rem;
   padding: .16rem .52rem;
-  background: #f1f5ff;
-  border: 1px solid #d8e2ff;
   border-radius: 999px;
-  color: #374151;
   font-size: .72rem;
+  font-weight: 600;
 }
+
+.tag-tone-0 { background: #f1f5ff; border: 1px solid #d8e2ff; color: #1e3a8a; }
+.tag-tone-1 { background: #eef2ff; border: 1px solid #d7dcff; color: #3730a3; }
+.tag-tone-2 { background: #f5f3ff; border: 1px solid #e4dcff; color: #5b21b6; }
+.tag-tone-3 { background: #fdf2f8; border: 1px solid #fbcfe8; color: #9d174d; }
+.tag-tone-4 { background: #ecfeff; border: 1px solid #bae6fd; color: #155e75; }
+.tag-tone-5 { background: #ecfdf5; border: 1px solid #bbf7d0; color: #166534; }
+.tag-tone-6 { background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; }
+.tag-tone-7 { background: #f8fafc; border: 1px solid #dbe5f1; color: #334155; }
 
 .tag-remove {
   border: none;
   background: none;
-  color: #64748b;
+  color: currentColor;
   font-size: .74rem;
   padding: 0;
   cursor: pointer;
@@ -361,8 +368,9 @@ input[type=checkbox] { accent-color: var(--primary); }
   box-shadow: none;
   text-shadow: none;
   animation: none;
+  opacity: .72;
 }
-.tag-remove:hover { color: #dc2626; }
+.tag-remove:hover { color: #dc2626; opacity: 1; }
 
 .tag-input {
   width: 74px;
