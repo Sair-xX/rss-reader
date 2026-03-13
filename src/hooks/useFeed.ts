@@ -12,8 +12,8 @@ type FeedResponse = {
   totalPages: number;
 };
 
-const hasEmbeddedTags = (entries: any[]): entries is FeedEntry[] =>
-  entries.every((entry) => Array.isArray(entry.tags));
+const extractAllTags = (items: FeedEntry[]) =>
+  [...new Set(items.flatMap((item) => item.tags ?? []))].sort();
 
 export function useFeed() {
   const [sources, setSources] = useState<FeedSource[]>([]);
@@ -37,45 +37,27 @@ export function useFeed() {
       const params = new URLSearchParams();
       params.set('page', String(page));
       params.set('limit', String(PAGE_LIMIT));
-      params.set('includeTags', '1');
       if (q.trim()) params.set('q', q.trim());
 
-      const [feedRes, tagsRes] = await Promise.all([
-        fetch(`${API}/api/feed?${params.toString()}`),
-        fetch(`${API}/api/tags`),
-      ]);
-
+      const feedRes = await fetch(`${API}/api/feed?${params.toString()}`);
       const feedJson = await feedRes.json();
-      const tagsData: string[] = await tagsRes.json();
-      setAllTags(tagsData);
 
       const isPaged = feedJson && typeof feedJson === 'object' && Array.isArray(feedJson.items);
-      const feedData: any[] = isPaged ? feedJson.items : (Array.isArray(feedJson) ? feedJson : []);
+      const feedItems: FeedEntry[] = isPaged ? feedJson.items : (Array.isArray(feedJson) ? feedJson : []);
 
       if (isPaged) {
         const payload = feedJson as FeedResponse;
-        setTotal(payload.total ?? feedData.length);
+        setTotal(payload.total ?? feedItems.length);
         setTotalPages(payload.totalPages ?? 1);
         setCurrentPage(payload.page ?? page);
       } else {
-        setTotal(feedData.length);
+        setTotal(feedItems.length);
         setTotalPages(1);
         setCurrentPage(page);
       }
 
-      if (hasEmbeddedTags(feedData)) {
-        setEntries(feedData);
-        return;
-      }
-
-      const entriesWithTags = await Promise.all(
-        feedData.map(async (entry: FeedEntry) => {
-          const res = await fetch(`${API}/api/tags/${encodeURIComponent(entry.id)}`);
-          const tags = await res.json();
-          return { ...entry, tags: tags.map((t: any) => t.tag) };
-        })
-      );
-      setEntries(entriesWithTags);
+      setEntries(feedItems);
+      setAllTags(extractAllTags(feedItems));
     } finally {
       setLoading(false);
     }
