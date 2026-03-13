@@ -2,6 +2,10 @@ import { useState, useEffect, useCallback } from 'react';
 import type { FeedEntry, FeedSource } from '../types';
 
 const API = 'https://rss-reader-server-production-344f.up.railway.app';
+
+const hasEmbeddedTags = (entries: any[]): entries is FeedEntry[] =>
+  entries.every((entry) => Array.isArray(entry.tags));
+
 export function useFeed() {
   const [sources, setSources] = useState<FeedSource[]>([]);
   const [entries, setEntries] = useState<FeedEntry[]>([]);
@@ -18,14 +22,19 @@ export function useFeed() {
     setLoading(true);
     try {
       const [feedRes, tagsRes] = await Promise.all([
-        fetch(`${API}/api/feed`),
+        fetch(`${API}/api/feed?includeTags=1`),
         fetch(`${API}/api/tags`),
       ]);
-      const feedData = await feedRes.json();
+      const feedData: any[] = await feedRes.json();
       const tagsData: string[] = await tagsRes.json();
       setAllTags(tagsData);
 
-      // 各記事のタグを取得
+      if (hasEmbeddedTags(feedData)) {
+        setEntries(feedData);
+        return;
+      }
+
+      // バックエンドがまだ tags を埋め込まない場合のみフォールバック
       const entriesWithTags = await Promise.all(
         feedData.map(async (entry: FeedEntry) => {
           const res = await fetch(`${API}/api/tags/${encodeURIComponent(entry.id)}`);
