@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import type { FeedSource } from '../types';
 
 interface Props {
