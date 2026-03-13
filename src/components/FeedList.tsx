@@ -25,6 +25,13 @@ function getTagToneIndex(tag: string) {
   return Math.abs(hash) % TAG_TONE_COUNT;
 }
 
+const toPlainText = (value: string) =>
+  value
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
 function SkeletonRow() {
   return (
     <div className="skeleton-row">
@@ -154,6 +161,9 @@ export function FeedList({ entries, loading, error, onToggleBookmark, isBookmark
                 <a href={entry.link} target="_blank" rel="noopener noreferrer">
                   {entry.title}
                 </a>
+                {entry.content ? (
+                  <p className="entry-description">{toPlainText(entry.content)}</p>
+                ) : null}
                 <div className="summary-actions">
                   <button
                     type="button"

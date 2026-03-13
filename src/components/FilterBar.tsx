@@ -9,6 +9,9 @@ interface Props {
   allTags: string[];
   selectedTag: string | null;
   onSelectTag: (tag: string) => void;
+  showJapanese: boolean;
+  translateLoading: boolean;
+  onToggleJapanese: () => void;
 }
 
 export function FilterBar({
@@ -16,6 +19,7 @@ export function FilterBar({
   showBookmarked, onToggle,
   onRefresh, loading, count,
   allTags, selectedTag, onSelectTag,
+  showJapanese, translateLoading, onToggleJapanese,
 }: Props) {
   return (
     <section className="panel">
@@ -33,6 +37,9 @@ export function FilterBar({
         </label>
         <button onClick={onRefresh} disabled={loading}>
           {loading ? 'SCANNING...' : '更新'}
+        </button>
+        <button type="button" onClick={onToggleJapanese} disabled={translateLoading}>
+          {translateLoading ? '翻訳中...' : (showJapanese ? '🌐 原文' : '🌐 日本語')}
         </button>
         <span className="count-badge">{count} articles</span>
       </div>

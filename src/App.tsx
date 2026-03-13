@@ -9,16 +9,37 @@ const PAGE_LIMIT = 20;
 
 type AuthUser = { id?: string; name?: string; email?: string; picture?: string };
 
+type TranslationValue = {
+  title: string;
+  content?: string;
+};
+
+const MYMEMORY_API = 'https://api.mymemory.translated.net/get';
+
+async function translateText(text: string) {
+  const trimmed = text.trim();
+  if (!trimmed) return text;
+
+  const res = await fetch(`${MYMEMORY_API}?q=${encodeURIComponent(trimmed)}&langpair=en|ja`);
+  if (!res.ok) throw new Error('translate_failed');
+
+  const data: { responseData?: { translatedText?: string } } = await res.json();
+  return data.responseData?.translatedText?.trim() || text;
+}
+
 export default function App() {
   const [showBookmarked, setShowBookmarked] = useState(false);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [showJapanese, setShowJapanese] = useState(false);
+  const [translateLoading, setTranslateLoading] = useState(false);
+  const [translationCache, setTranslationCache] = useState<Record<string, TranslationValue>>({});
 
   const handleUnauthorized = useCallback(() => setUser(null), []);
 
   const {
-    sources, entries, allTags, loading, error,
+    sources, entries, bookmarks, allTags, bookmarkTags, loading, error,
     total, totalPages, currentPage, searchQuery,
     addSource, removeSource,
     toggleBookmark,
@@ -27,6 +48,7 @@ export default function App() {
     search,
     goToPage,
     refresh,
+    refreshBookmarks,
   } = useFeed({ onUnauthorized: handleUnauthorized, enabled: !checkingAuth && !!user });
 
   useEffect(() => {
@@ -62,18 +84,61 @@ export default function App() {
     setUser(null);
   };
 
-  const displayed = entries
-    .filter(e => !showBookmarked || e.bookmarked)
-    .filter(e => !selectedTag || e.tags.includes(selectedTag));
+  const baseEntries = showBookmarked ? bookmarks : entries;
+  const visibleTags = showBookmarked ? bookmarkTags : allTags;
+  const displayed = baseEntries.filter(e => !selectedTag || e.tags.includes(selectedTag));
+  const translatedDisplayed = showJapanese
+    ? displayed.map((entry) => {
+        const translated = translationCache[entry.id];
+        return translated ? { ...entry, title: translated.title, content: translated.content ?? entry.content } : entry;
+      })
+    : displayed;
 
   const rangeStart = total === 0 ? 0 : (currentPage - 1) * PAGE_LIMIT + 1;
   const rangeEnd = Math.min(currentPage * PAGE_LIMIT, total);
-  const showPaging = total > PAGE_LIMIT && totalPages > 1;
+  const showPaging = !showBookmarked && total > PAGE_LIMIT && totalPages > 1;
 
+
+  useEffect(() => {
+    if (selectedTag && !visibleTags.includes(selectedTag)) {
+      setSelectedTag(null);
+    }
+  }, [selectedTag, visibleTags]);
   const handleChangePage = (page: number) => {
     goToPage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  const handleToggleJapanese = useCallback(async () => {
+    if (showJapanese) {
+      setShowJapanese(false);
+      return;
+    }
+
+    const targets = displayed.filter((entry) => !translationCache[entry.id]);
+    if (targets.length === 0) {
+      setShowJapanese(true);
+      return;
+    }
+
+    setTranslateLoading(true);
+    try {
+      const nextCache: Record<string, TranslationValue> = { ...translationCache };
+
+      for (const entry of targets) {
+        const title = await translateText(entry.title);
+        const content = entry.content ? await translateText(entry.content) : undefined;
+        nextCache[entry.id] = { title, content };
+      }
+
+      setTranslationCache(nextCache);
+      setShowJapanese(true);
+    } catch {
+      setShowJapanese(false);
+    } finally {
+      setTranslateLoading(false);
+    }
+  }, [displayed, showJapanese, translationCache]);
 
   if (checkingAuth) {
     return (
@@ -114,15 +179,18 @@ export default function App() {
         onSearchChange={search}
         showBookmarked={showBookmarked}
         onToggle={() => setShowBookmarked(p => !p)}
-        onRefresh={refresh}
+        onRefresh={showBookmarked ? refreshBookmarks : refresh}
         loading={loading}
         count={displayed.length}
-        allTags={allTags}
+        allTags={visibleTags}
         selectedTag={selectedTag}
         onSelectTag={tag => setSelectedTag(tag || null)}
+        showJapanese={showJapanese}
+        translateLoading={translateLoading}
+        onToggleJapanese={handleToggleJapanese}
       />
       <FeedList
-        entries={displayed}
+        entries={translatedDisplayed}
         loading={loading}
         error={error}
         onToggleBookmark={toggleBookmark}
