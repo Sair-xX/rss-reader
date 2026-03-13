@@ -34,6 +34,7 @@ export default function App() {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [showJapanese, setShowJapanese] = useState(false);
   const [translateLoading, setTranslateLoading] = useState(false);
+  const [translationProgress, setTranslationProgress] = useState({ translated: 0, total: 0 });
   const [translationCache, setTranslationCache] = useState<Record<string, TranslationValue>>({});
 
   const handleUnauthorized = useCallback(() => setUser(null), []);
@@ -121,22 +122,32 @@ export default function App() {
       return;
     }
 
+    setShowJapanese(true);
     setTranslateLoading(true);
+    setTranslationProgress({ translated: 0, total: targets.length });
+
     try {
-      const nextCache: Record<string, TranslationValue> = { ...translationCache };
+      let translatedCount = 0;
 
       for (const entry of targets) {
-        const title = await translateText(entry.title);
-        const content = entry.content ? await translateText(entry.content) : undefined;
-        nextCache[entry.id] = { title, content };
-      }
+        try {
+          const title = await translateText(entry.title);
+          const content = entry.content ? await translateText(entry.content) : undefined;
 
-      setTranslationCache(nextCache);
-      setShowJapanese(true);
+          setTranslationCache((prev) => ({
+            ...prev,
+            [entry.id]: { title, content },
+          }));
+        } finally {
+          translatedCount += 1;
+          setTranslationProgress({ translated: translatedCount, total: targets.length });
+        }
+      }
     } catch {
       setShowJapanese(false);
     } finally {
       setTranslateLoading(false);
+      setTranslationProgress({ translated: 0, total: 0 });
     }
   }, [displayed, showJapanese, translationCache]);
 
@@ -187,6 +198,8 @@ export default function App() {
         onSelectTag={tag => setSelectedTag(tag || null)}
         showJapanese={showJapanese}
         translateLoading={translateLoading}
+        translatedCount={translationProgress.translated}
+        totalToTranslate={translationProgress.total}
         onToggleJapanese={handleToggleJapanese}
       />
       <FeedList
