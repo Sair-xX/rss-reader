@@ -140,24 +140,27 @@ export function FeedRegistration({ sources, onAdd, onRemove }: Props) {
             setShowPresets((prev) => !prev);
             if (showPresets) setSelectedCategory(null);
           }}
+          style={{ textTransform: 'none', letterSpacing: '.02em' }}
         >
-          {showPresets ? 'おすすめRSSを閉じる' : 'おすすめRSS'}
+          {showPresets ? '▲ おすすめRSSを隠す' : '▼ おすすめRSSから追加'}
         </button>
         {showPresets && (
           <div style={{ display: 'grid', gap: 8, marginTop: 8 }}>
+            <div style={{ fontSize: '.68rem', color: '#a78bfa' }}>分野を選ぶと候補を表示します</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {RSS_PRESETS.map((group) => (
                 <button
                   key={group.category}
                   type="button"
-                  onClick={() => setSelectedCategory(group.category)}
+                  onClick={() => setSelectedCategory((prev) => (prev === group.category ? null : group.category))}
                   style={{
                     textTransform: 'none',
                     letterSpacing: '.05em',
                     opacity: selectedCategory === group.category ? 1 : 0.85,
+                    borderColor: selectedCategory === group.category ? '#a78bfa' : undefined,
                   }}
                 >
-                  {group.category}
+                  {selectedCategory === group.category ? `▲ ${group.category}` : `▼ ${group.category}`}
                 </button>
               ))}
             </div>
@@ -185,8 +188,12 @@ export function FeedRegistration({ sources, onAdd, onRemove }: Props) {
       {error && <p style={{ color: '#ff6b6b', marginTop: 8 }}>{error}</p>}
       {sources.length > 0 && (
         <div style={{ marginTop: 10 }}>
-          <button type="button" onClick={() => setShowSources((prev) => !prev)}>
-            {showSources ? '追加済みRSS一覧を隠す' : `追加済みRSS一覧を表示 (${sources.length})`}
+          <button
+            type="button"
+            onClick={() => setShowSources((prev) => !prev)}
+            style={{ textTransform: 'none', letterSpacing: '.02em', borderColor: '#22d3ee' }}
+          >
+            {showSources ? '▲ 追加済みRSS一覧を隠す' : `▼ 追加済みRSS一覧を表示 (${sources.length})`}
           </button>
           {showSources && (
             <ul className="source-list" style={{ marginTop: 8 }}>
