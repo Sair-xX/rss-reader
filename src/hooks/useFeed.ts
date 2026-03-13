@@ -12,10 +12,15 @@ type FeedResponse = {
   totalPages: number;
 };
 
+interface UseFeedOptions {
+  onUnauthorized?: () => void;
+}
+
 const extractAllTags = (items: FeedEntry[]) =>
   [...new Set(items.flatMap((item) => item.tags ?? []))].sort();
 
-export function useFeed() {
+export function useFeed(options: UseFeedOptions = {}) {
+  const { onUnauthorized } = options;
   const [sources, setSources] = useState<FeedSource[]>([]);
   const [entries, setEntries] = useState<FeedEntry[]>([]);
   const [allTags, setAllTags] = useState<string[]>([]);
@@ -25,11 +30,32 @@ export function useFeed() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
 
+  const apiFetch = useCallback(
+    async (url: string, init?: RequestInit) => {
+      const res = await fetch(url, {
+        ...init,
+        credentials: 'include',
+      });
+
+      if (res.status === 401) {
+        onUnauthorized?.();
+        throw new Error('unauthorized');
+      }
+
+      return res;
+    },
+    [onUnauthorized]
+  );
+
   const fetchSources = useCallback(async () => {
-    const res = await fetch(`${API}/api/sources`);
-    const data = await res.json();
-    setSources(data.map((s: any) => ({ id: s.id, url: s.url, label: s.label })));
-  }, []);
+    try {
+      const res = await apiFetch(`${API}/api/sources`);
+      const data = await res.json();
+      setSources(data.map((s: any) => ({ id: s.id, url: s.url, label: s.label })));
+    } catch (error) {
+      if ((error as Error).message !== 'unauthorized') throw error;
+    }
+  }, [apiFetch]);
 
   const fetchFeed = useCallback(async (page: number, q: string) => {
     setLoading(true);
@@ -39,7 +65,7 @@ export function useFeed() {
       params.set('limit', String(PAGE_LIMIT));
       if (q.trim()) params.set('q', q.trim());
 
-      const feedRes = await fetch(`${API}/api/feed?${params.toString()}`);
+      const feedRes = await apiFetch(`${API}/api/feed?${params.toString()}`);
       const feedJson = await feedRes.json();
 
       const isPaged = feedJson && typeof feedJson === 'object' && Array.isArray(feedJson.items);
@@ -58,10 +84,12 @@ export function useFeed() {
 
       setEntries(feedItems);
       setAllTags(extractAllTags(feedItems));
+    } catch (error) {
+      if ((error as Error).message !== 'unauthorized') throw error;
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [apiFetch]);
 
   useEffect(() => {
     fetchSources();
@@ -74,7 +102,7 @@ export function useFeed() {
   }, [fetchFeed, currentPage, searchQuery]);
 
   const addSource = async (source: FeedSource) => {
-    await fetch(`${API}/api/sources`, {
+    await apiFetch(`${API}/api/sources`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(source),
@@ -84,32 +112,34 @@ export function useFeed() {
   };
 
   const removeSource = async (id: string) => {
-    await fetch(`${API}/api/sources/${id}`, { method: 'DELETE' });
+    await apiFetch(`${API}/api/sources/${id}`, { method: 'DELETE' });
     setSources(prev => prev.filter(s => s.id !== id));
     setEntries(prev => prev.filter(e => e.sourceId !== id));
   };
 
   const toggleBookmark = async (entry: FeedEntry) => {
     if (entry.bookmarked) {
-      await fetch(`${API}/api/bookmarks/${entry.id}`, { method: 'DELETE' });
+      await apiFetch(`${API}/api/bookmarks/${entry.id}`, { method: 'DELETE' });
     } else {
-      await fetch(`${API}/api/bookmarks`, {
+      await apiFetch(`${API}/api/bookmarks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(entry),
       });
     }
+
     setEntries(prev =>
       prev.map(e => e.id === entry.id ? { ...e, bookmarked: !e.bookmarked } : e)
     );
   };
 
   const addTag = async (articleId: string, tag: string) => {
-    await fetch(`${API}/api/tags`, {
+    await apiFetch(`${API}/api/tags`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ articleId, tag }),
     });
+
     setEntries(prev =>
       prev.map(e => e.id === articleId ? { ...e, tags: [...e.tags, tag] } : e)
     );
@@ -117,11 +147,12 @@ export function useFeed() {
   };
 
   const removeTag = async (articleId: string, tag: string) => {
-    await fetch(`${API}/api/tags`, {
+    await apiFetch(`${API}/api/tags`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ articleId, tag }),
     });
+
     setEntries(prev =>
       prev.map(e => e.id === articleId ? { ...e, tags: e.tags.filter(t => t !== tag) } : e)
     );
