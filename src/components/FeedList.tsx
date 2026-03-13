@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import type { FeedEntry } from '../types';
 
 interface Props {
@@ -52,6 +52,40 @@ function TagInput({ entry, onAddTag, onRemoveTag }: {
 }
 
 export function FeedList({ entries, loading, onToggleBookmark, onAddTag, onRemoveTag }: Props) {
+  const [summaries, setSummaries] = useState<Record<string, string>>({});
+  const [summaryLoading, setSummaryLoading] = useState<Record<string, boolean>>({});
+  const [summaryError, setSummaryError] = useState<Record<string, string>>({});
+
+  const handleSummarize = async (entry: FeedEntry) => {
+    const content = entry.content?.trim() || entry.title;
+
+    setSummaryLoading((prev) => ({ ...prev, [entry.id]: true }));
+    setSummaryError((prev) => ({ ...prev, [entry.id]: '' }));
+
+    try {
+      const response = await fetch('https://rss-reader-server-production-344f.up.railway.app/api/ai/summarize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: entry.title, content }),
+      });
+
+      if (!response.ok) {
+        throw new Error('failed');
+      }
+
+      const data: { summary?: string } = await response.json();
+      if (!data.summary) {
+        throw new Error('empty');
+      }
+
+      setSummaries((prev) => ({ ...prev, [entry.id]: data.summary ?? '' }));
+    } catch {
+      setSummaryError((prev) => ({ ...prev, [entry.id]: '要約に失敗しました' }));
+    } finally {
+      setSummaryLoading((prev) => ({ ...prev, [entry.id]: false }));
+    }
+  };
+
   if (loading) {
     return (
       <section className="panel">
@@ -86,6 +120,21 @@ export function FeedList({ entries, loading, onToggleBookmark, onAddTag, onRemov
                 <a href={entry.link} target="_blank" rel="noopener noreferrer">
                   {entry.title}
                 </a>
+                <div className="summary-actions">
+                  <button
+                    type="button"
+                    onClick={() => handleSummarize(entry)}
+                    disabled={!!summaryLoading[entry.id]}
+                  >
+                    {summaryLoading[entry.id] ? '要約中...' : 'AI要約'}
+                  </button>
+                </div>
+                {summaryError[entry.id] ? (
+                  <p className="summary-error">{summaryError[entry.id]}</p>
+                ) : null}
+                {summaries[entry.id] ? (
+                  <p className="summary-text">{summaries[entry.id]}</p>
+                ) : null}
               </td>
               <td>
                 <span className="source-badge">{entry.source}</span>
