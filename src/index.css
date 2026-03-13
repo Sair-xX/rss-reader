@@ -196,6 +196,22 @@ input[type=checkbox] { accent-color: #d946ef; }
 }
 .feed-table tbody td { padding: .65rem .75rem; }
 
+.summary-actions { margin-top: .45rem; }
+.summary-text {
+  margin-top: .45rem;
+  margin-bottom: 0;
+  font-size: .75rem;
+  color: #ddd6fe;
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+.summary-error {
+  margin-top: .45rem;
+  margin-bottom: 0;
+  font-size: .72rem;
+  color: #fb7185;
+}
+
 .source-badge {
   display: inline-block;
   padding: .15rem .5rem;
@@ -376,3 +392,59 @@ input[type=checkbox] { accent-color: #d946ef; }
 }
 .tag-input::placeholder { color: #7c3aed44; }
 .tag-input:focus { border-bottom-color: #a855f7; }
+/* MCP discussion builder */
+.mcp-helper-text {
+  color: #a78bfa;
+  font-size: .78rem;
+  text-align: left;
+  margin-bottom: .75rem;
+}
+
+.mcp-entry-list {
+  max-height: 170px;
+  overflow: auto;
+  border: 1px solid #7c3aed33;
+  border-radius: 4px;
+  padding: .5rem;
+  margin-bottom: .75rem;
+  background: #070412;
+}
+
+.mcp-entry-item {
+  display: flex;
+  align-items: flex-start;
+  gap: .5rem;
+  font-size: .75rem;
+  text-align: left;
+  padding: .35rem;
+  border-radius: 3px;
+}
+.mcp-entry-item:hover {
+  background: #7c3aed1a;
+}
+
+.mcp-empty {
+  font-size: .74rem;
+  color: #7c3aed88;
+  text-align: left;
+  padding: .4rem;
+}
+
+.mcp-prompt {
+  width: 100%;
+  min-height: 220px;
+  background: #06040f;
+  border: 1px solid #7c3aed66;
+  color: #ede9fe;
+  border-radius: 4px;
+  padding: .7rem;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: .75rem;
+  margin-bottom: .75rem;
+  resize: vertical;
+}
+
+.mcp-status {
+  font-size: .72rem;
+  color: #22d3ee;
+}
