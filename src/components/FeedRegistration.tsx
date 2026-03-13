@@ -1,21 +1,54 @@
 import { useState } from 'react';
 import type { FeedSource } from '../types';
 
+const API = 'https://rss-reader-server-production-344f.up.railway.app';
+
 interface Props {
   sources: FeedSource[];
-  onAdd: (source: FeedSource) => void;
+  onAdd: (source: FeedSource) => Promise<void> | void;
   onRemove: (id: string) => void;
 }
 
 export function FeedRegistration({ sources, onAdd, onRemove }: Props) {
   const [url, setUrl] = useState('');
-  const [label, setLabel] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleAdd = () => {
-    if (!url.trim() || !label.trim()) return;
-    onAdd({ id: crypto.randomUUID(), url: url.trim(), label: label.trim() });
-    setUrl('');
-    setLabel('');
+  const handleAdd = async () => {
+    if (!url.trim() || loading) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const res = await fetch(`${API}/api/sources/resolve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: url.trim() }),
+      });
+
+      if (!res.ok) {
+        setError('RSSフィードが見つかりませんでした');
+        return;
+      }
+
+      const data: { feedUrl?: string; title?: string } = await res.json();
+      if (!data.feedUrl) {
+        setError('RSSフィードが見つかりませんでした');
+        return;
+      }
+
+      await onAdd({
+        id: crypto.randomUUID(),
+        url: data.feedUrl,
+        label: data.title || data.feedUrl,
+      });
+      setUrl('');
+    } catch {
+      setError('通信エラーが発生しました');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -23,20 +56,21 @@ export function FeedRegistration({ sources, onAdd, onRemove }: Props) {
       <div className="panel-label">// FEED_REGISTRATION</div>
       <div className="row">
         <input
-          value={label}
-          onChange={(e) => setLabel(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
-          placeholder="名前（例：Zenn）"
-        />
-        <input
           className="input-wide"
           value={url}
-          onChange={(e) => setUrl(e.target.value)}
+          onChange={(e) => {
+            setUrl(e.target.value);
+            if (error) setError(null);
+          }}
           onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
-          placeholder="RSS URL"
+          placeholder="サイトURL（例：https://zenn.dev）"
+          disabled={loading}
         />
-        <button onClick={handleAdd}>追加</button>
+        <button onClick={handleAdd} disabled={loading}>
+          {loading ? 'フィードを検索中...' : '追加'}
+        </button>
       </div>
+      {error && <p style={{ color: '#ff6b6b', marginTop: 8 }}>{error}</p>}
       {sources.length > 0 && (
         <ul className="source-list">
           {sources.map((s) => (
