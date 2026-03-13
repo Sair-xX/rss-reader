@@ -15,12 +15,6 @@ export function useFeed() {
     setSources(data.map((s: any) => ({ id: s.id, url: s.url, label: s.label })));
   }, []);
 
-  const fetchTags = useCallback(async () => {
-    const res = await fetch(`${API}/api/tags`);
-    const data = await res.json();
-    setAllTags(data);
-  }, []);
-
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
