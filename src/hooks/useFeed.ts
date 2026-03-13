@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { FeedEntry, FeedSource } from '../types';
 
-const API = 'https://rss-reader-server-production-38dc.up.railway.app';
-
+const API = 'https://rss-reader-server-production-344f.up.railway.app';
 export function useFeed() {
   const [sources, setSources] = useState<FeedSource[]>([]);
   const [entries, setEntries] = useState<FeedEntry[]>([]);
