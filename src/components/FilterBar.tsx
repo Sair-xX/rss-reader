@@ -11,6 +11,8 @@ interface Props {
   onSelectTag: (tag: string) => void;
   showJapanese: boolean;
   translateLoading: boolean;
+  translatedCount: number;
+  totalToTranslate: number;
   onToggleJapanese: () => void;
 }
 
@@ -19,8 +21,12 @@ export function FilterBar({
   showBookmarked, onToggle,
   onRefresh, loading, count,
   allTags, selectedTag, onSelectTag,
-  showJapanese, translateLoading, onToggleJapanese,
+  showJapanese, translateLoading, translatedCount, totalToTranslate, onToggleJapanese,
 }: Props) {
+  const translateLabel = translateLoading
+    ? `翻訳中... ${translatedCount}/${totalToTranslate}`
+    : (showJapanese ? '🌐 原文' : '🌐 日本語');
+
   return (
     <section className="panel">
       <div className="row">
@@ -39,7 +45,7 @@ export function FilterBar({
           {loading ? 'SCANNING...' : '更新'}
         </button>
         <button type="button" onClick={onToggleJapanese} disabled={translateLoading}>
-          {translateLoading ? '翻訳中...' : (showJapanese ? '🌐 原文' : '🌐 日本語')}
+          {translateLabel}
         </button>
         <span className="count-badge">{count} articles</span>
       </div>
