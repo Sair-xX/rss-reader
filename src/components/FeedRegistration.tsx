@@ -133,7 +133,11 @@ export function FeedRegistration({ sources, onAdd, onRemove }: Props) {
           {loading ? 'フィードを検索中...' : '追加'}
         </button>
       </div>
-      <div style={{ marginTop: 12 }}>
+      <div className="feed-section feed-section-suggested">
+        <div className="feed-section-header">
+          <span className="feed-section-badge">提案</span>
+          <span className="feed-section-title">おすすめRSS（未追加候補）</span>
+        </div>
         <button
           type="button"
           onClick={() => {
@@ -141,7 +145,7 @@ export function FeedRegistration({ sources, onAdd, onRemove }: Props) {
             if (showPresets) setSelectedCategory(null);
           }}
         >
-          {showPresets ? 'おすすめRSSを閉じる' : 'おすすめRSS'}
+          {showPresets ? 'おすすめRSSを閉じる' : 'おすすめRSSを表示'}
         </button>
         {showPresets && (
           <div style={{ display: 'grid', gap: 8, marginTop: 8 }}>
@@ -184,7 +188,11 @@ export function FeedRegistration({ sources, onAdd, onRemove }: Props) {
       </div>
       {error && <p style={{ color: '#ff6b6b', marginTop: 8 }}>{error}</p>}
       {sources.length > 0 && (
-        <div style={{ marginTop: 10 }}>
+        <div className="feed-section feed-section-registered">
+          <div className="feed-section-header">
+            <span className="feed-section-badge">管理</span>
+            <span className="feed-section-title">追加済みRSS一覧（登録中）</span>
+          </div>
           <button type="button" onClick={() => setShowSources((prev) => !prev)}>
             {showSources ? '追加済みRSS一覧を隠す' : `追加済みRSS一覧を表示 (${sources.length})`}
           </button>
