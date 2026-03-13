@@ -22,6 +22,7 @@ export default function App() {
     total, totalPages, currentPage, searchQuery,
     addSource, removeSource,
     toggleBookmark,
+    isBookmarkPending,
     addTag, removeTag,
     search,
     goToPage,
@@ -125,6 +126,7 @@ export default function App() {
         loading={loading}
         error={error}
         onToggleBookmark={toggleBookmark}
+        isBookmarkPending={isBookmarkPending}
         onAddTag={addTag}
         onRemoveTag={removeTag}
         onUnauthorized={handleUnauthorized}

@@ -39,6 +39,7 @@ export function useFeed(options: UseFeedOptions = {}) {
   const [allTags, setAllTags] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [bookmarkPendingIds, setBookmarkPendingIds] = useState<Set<string>>(new Set());
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -143,20 +144,46 @@ export function useFeed(options: UseFeedOptions = {}) {
   };
 
   const toggleBookmark = async (entry: FeedEntry) => {
-    if (entry.bookmarked) {
-      await apiFetch(`${API}/api/bookmarks/${entry.id}`, { method: 'DELETE' });
-    } else {
-      await apiFetch(`${API}/api/bookmarks`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(entry),
-      });
-    }
+    const nextBookmarked = !entry.bookmarked;
 
     setEntries(prev =>
-      prev.map(e => e.id === entry.id ? { ...e, bookmarked: !e.bookmarked } : e)
+      prev.map(e => e.id === entry.id ? { ...e, bookmarked: nextBookmarked } : e)
     );
+
+    setBookmarkPendingIds(prev => {
+      const next = new Set(prev);
+      next.add(entry.id);
+      return next;
+    });
+
+    try {
+      if (entry.bookmarked) {
+        await apiFetch(`${API}/api/bookmarks/${entry.id}`, { method: 'DELETE' });
+      } else {
+        await apiFetch(`${API}/api/bookmarks`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(entry),
+        });
+      }
+    } catch (toggleError) {
+      setEntries(prev =>
+        prev.map(e => e.id === entry.id ? { ...e, bookmarked: entry.bookmarked } : e)
+      );
+      if ((toggleError as Error).message !== 'unauthorized') {
+        setError('ブックマーク更新に失敗しました。もう一度お試しください。');
+      }
+      throw toggleError;
+    } finally {
+      setBookmarkPendingIds(prev => {
+        const next = new Set(prev);
+        next.delete(entry.id);
+        return next;
+      });
+    }
   };
+
+  const isBookmarkPending = useCallback((entryId: string) => bookmarkPendingIds.has(entryId), [bookmarkPendingIds]);
 
   const addTag = async (articleId: string, tag: string) => {
     await apiFetch(`${API}/api/tags`, {
@@ -203,6 +230,7 @@ export function useFeed(options: UseFeedOptions = {}) {
     total, totalPages, currentPage, searchQuery,
     addSource, removeSource,
     toggleBookmark,
+    isBookmarkPending,
     addTag, removeTag,
     search,
     goToPage,
