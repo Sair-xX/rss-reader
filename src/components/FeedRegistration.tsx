@@ -64,7 +64,7 @@ const RSS_PRESETS = [
     category: 'ゲーム',
     items: [
       { label: '4Gamer', url: 'https://www.4gamer.net/rss/index.xml' },
-      { label: 'ファミ通', url: 'https://www.famitsu.com/feed' },
+      { label: 'ファミ通', url: 'https://www.famitsu.com/rss/fcom_all.rdf' },
       { label: 'Game*Spark', url: 'https://www.gamespark.jp/index.rdf' },
       { label: 'IGN Japan', url: 'https://jp.ign.com/feed.xml' },
       { label: 'AUTOMATON', url: 'https://automaton-media.com/feed/' },
@@ -74,7 +74,6 @@ const RSS_PRESETS = [
   {
     category: 'アニメ',
     items: [
-      { label: 'アニメイトタイムズ', url: 'https://www.animatetimes.com/rss/' },
       { label: 'Anime!Anime!', url: 'https://animeanime.jp/rss20.xml' },
       { label: 'アキバ総研', url: 'https://akiba-souken.com/rss/' },
       { label: 'アニメハック', url: 'https://anime.eiga.com/rss/' },
@@ -82,7 +81,6 @@ const RSS_PRESETS = [
   },
 ] as const;
 
-// ボタンスタイル定義
 const btnPreset: React.CSSProperties = {
   background: 'transparent',
   border: '1.5px solid #7c3aed',
@@ -168,7 +166,6 @@ export function FeedRegistration({ sources, onAdd, onRemove }: Props) {
         </button>
       </div>
 
-      {/* おすすめRSS：紫ボーダー */}
       <div style={{ marginTop: 8 }}>
         <button
           type="button"
@@ -215,14 +212,13 @@ export function FeedRegistration({ sources, onAdd, onRemove }: Props) {
         )}
       </div>
 
-      {/* 登録済み：グレーボーダー */}
       <div style={{ marginTop: 8 }}>
         <button
           type="button"
           style={btnSources}
           onClick={() => setShowSources(p => !p)}
         >
-          {showSources ? `登録済みを閉じる ▲` : `登録済み（${sources.length}）▼`}
+          {showSources ? '登録済みを閉じる ▲' : `登録済み（${sources.length}）▼`}
         </button>
 
         {showSources && (
