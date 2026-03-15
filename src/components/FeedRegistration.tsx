@@ -11,6 +11,7 @@ const RSS_PRESETS = [
       { label: 'Nature Physics', url: 'https://www.nature.com/nphys.rss' },
       { label: 'CERN News', url: 'https://home.cern/api/news/opendata.rss' },
       { label: 'Quanta Magazine (Physics)', url: 'https://www.quantamagazine.org/tag/physics/feed/' },
+      { label: 'Nature Japan 物理学', url: 'https://www.natureasia.com/ja-jp/rss/gateway/phys-sci' },
     ],
   },
   {
@@ -31,6 +32,7 @@ const RSS_PRESETS = [
       { label: 'PLOS Biology', url: 'https://journals.plos.org/plosbiology/feed/atom' },
       { label: 'Cell Press', url: 'https://www.cell.com/cell/current.rss' },
       { label: 'Nature Ecology & Evolution', url: 'https://www.nature.com/natecolevol.rss' },
+      { label: 'Nature Japan 生命科学', url: 'https://www.natureasia.com/ja-jp/rss/gateway/life-sci' },
     ],
   },
   {
