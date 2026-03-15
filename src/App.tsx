@@ -3,6 +3,7 @@ import { useFeed } from './hooks/useFeed';
 import { FeedRegistration } from './components/FeedRegistration';
 import { FilterBar } from './components/FilterBar';
 import { FeedList } from './components/FeedList';
+import { CATEGORY_SOURCE_MAP } from './constants';
 
 const API = 'https://rss-reader-server-production-344f.up.railway.app';
 const PAGE_LIMIT = 20;
@@ -19,10 +20,8 @@ const MYMEMORY_API = 'https://api.mymemory.translated.net/get';
 async function translateText(text: string) {
   const trimmed = text.trim();
   if (!trimmed) return text;
-
   const res = await fetch(`${MYMEMORY_API}?q=${encodeURIComponent(trimmed)}&langpair=en|ja`);
   if (!res.ok) throw new Error('translate_failed');
-
   const data: { responseData?: { translatedText?: string } } = await res.json();
   return data.responseData?.translatedText?.trim() || text;
 }
@@ -30,6 +29,7 @@ async function translateText(text: string) {
 export default function App() {
   const [showBookmarked, setShowBookmarked] = useState(false);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [showJapanese, setShowJapanese] = useState(false);
@@ -43,13 +43,9 @@ export default function App() {
     sources, entries, bookmarks, allTags, bookmarkTags, loading, error,
     total, totalPages, currentPage, searchQuery,
     addSource, removeSource,
-    toggleBookmark,
-    isBookmarkPending,
+    toggleBookmark, isBookmarkPending,
     addTag, removeTag,
-    search,
-    goToPage,
-    refresh,
-    refreshBookmarks,
+    search, goToPage, refresh, refreshBookmarks,
   } = useFeed({ onUnauthorized: handleUnauthorized, enabled: !checkingAuth && !!user });
 
   useEffect(() => {
@@ -57,10 +53,7 @@ export default function App() {
       setCheckingAuth(true);
       try {
         const res = await fetch(`${API}/api/auth/me`, { credentials: 'include' });
-        if (!res.ok) {
-          setUser(null);
-          return;
-        }
+        if (!res.ok) { setUser(null); return; }
         const me = await res.json();
         setUser(me?.user ?? me);
       } catch {
@@ -69,7 +62,6 @@ export default function App() {
         setCheckingAuth(false);
       }
     };
-
     checkAuth();
   }, []);
 
@@ -78,16 +70,19 @@ export default function App() {
   };
 
   const logout = async () => {
-    await fetch(`${API}/api/auth/logout`, {
-      method: 'POST',
-      credentials: 'include',
-    });
+    await fetch(`${API}/api/auth/logout`, { method: 'POST', credentials: 'include' });
     setUser(null);
   };
 
   const baseEntries = showBookmarked ? bookmarks : entries;
   const visibleTags = showBookmarked ? bookmarkTags : allTags;
-  const displayed = baseEntries.filter(e => !selectedTag || e.tags.includes(selectedTag));
+
+  // カテゴリフィルター → タグフィルターの順に適用
+  const categoryFiltered = selectedCategory
+    ? baseEntries.filter(e => CATEGORY_SOURCE_MAP[selectedCategory]?.includes(e.source))
+    : baseEntries;
+  const displayed = categoryFiltered.filter(e => !selectedTag || e.tags.includes(selectedTag));
+
   const translatedDisplayed = showJapanese
     ? displayed.map((entry) => {
         const translated = translationCache[entry.id];
@@ -99,45 +94,29 @@ export default function App() {
   const rangeEnd = Math.min(currentPage * PAGE_LIMIT, total);
   const showPaging = !showBookmarked && total > PAGE_LIMIT && totalPages > 1;
 
-
   useEffect(() => {
-    if (selectedTag && !visibleTags.includes(selectedTag)) {
-      setSelectedTag(null);
-    }
+    if (selectedTag && !visibleTags.includes(selectedTag)) setSelectedTag(null);
   }, [selectedTag, visibleTags]);
+
   const handleChangePage = (page: number) => {
     goToPage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleToggleJapanese = useCallback(async () => {
-    if (showJapanese) {
-      setShowJapanese(false);
-      return;
-    }
-
+    if (showJapanese) { setShowJapanese(false); return; }
     const targets = displayed.filter((entry) => !translationCache[entry.id]);
-    if (targets.length === 0) {
-      setShowJapanese(true);
-      return;
-    }
-
+    if (targets.length === 0) { setShowJapanese(true); return; }
     setShowJapanese(true);
     setTranslateLoading(true);
     setTranslationProgress({ translated: 0, total: targets.length });
-
     try {
       let translatedCount = 0;
-
       for (const entry of targets) {
         try {
           const title = await translateText(entry.title);
           const content = entry.content ? await translateText(entry.content) : undefined;
-
-          setTranslationCache((prev) => ({
-            ...prev,
-            [entry.id]: { title, content },
-          }));
+          setTranslationCache((prev) => ({ ...prev, [entry.id]: { title, content } }));
         } finally {
           translatedCount += 1;
           setTranslationProgress({ translated: translatedCount, total: targets.length });
@@ -201,6 +180,8 @@ export default function App() {
         translatedCount={translationProgress.translated}
         totalToTranslate={translationProgress.total}
         onToggleJapanese={handleToggleJapanese}
+        selectedCategory={selectedCategory}
+        onSelectCategory={setSelectedCategory}
       />
       <FeedList
         entries={translatedDisplayed}
@@ -216,17 +197,13 @@ export default function App() {
         {showPaging && (
           <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', justifyContent: 'center', marginTop: '1rem', flexWrap: 'wrap' }}>
             {currentPage > 1 && (
-              <button type="button" onClick={() => handleChangePage(currentPage - 1)} disabled={loading}>
-                ← 前の20件
-              </button>
+              <button type="button" onClick={() => handleChangePage(currentPage - 1)} disabled={loading}>← 前の20件</button>
             )}
             <span style={{ fontSize: '.75rem', color: '#7c3aed88' }}>
               {rangeStart}〜{rangeEnd} 件 / 全{total}件
             </span>
             {currentPage < totalPages && (
-              <button type="button" onClick={() => handleChangePage(currentPage + 1)} disabled={loading}>
-                次の20件 →
-              </button>
+              <button type="button" onClick={() => handleChangePage(currentPage + 1)} disabled={loading}>次の20件 →</button>
             )}
           </div>
         )}
