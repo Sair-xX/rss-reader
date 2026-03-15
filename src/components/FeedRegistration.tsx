@@ -29,8 +29,6 @@ const RSS_PRESETS = [
   {
     category: 'コンピューター・IT',
     items: [
-      { label: 'Zenn', url: 'https://zenn.dev/feed' },
-      { label: 'Qiita', url: 'https://qiita.com/popular-items/feed' },
       { label: 'Hacker News', url: 'https://hnrss.org/frontpage' },
       { label: 'Google AI Blog', url: 'https://blog.google/technology/ai/rss/' },
       { label: 'InfoQ', url: 'https://feed.infoq.com/' },
@@ -53,6 +51,8 @@ const RSS_PRESETS = [
   {
     category: '日本語IT・テック',
     items: [
+      { label: 'Zenn', url: 'https://zenn.dev/feed' },
+      { label: 'Qiita', url: 'https://qiita.com/popular-items/feed.atom' },
       { label: 'ITmedia', url: 'https://rss.itmedia.co.jp/rss/2.0/itmediamain.xml' },
       { label: 'ASCII.jp', url: 'https://ascii.jp/rss.xml' },
       { label: 'Gihyo（技術評論社）', url: 'https://gihyo.jp/feed/rss2' },
@@ -81,6 +81,27 @@ const RSS_PRESETS = [
     ],
   },
 ] as const;
+
+// ボタンスタイル定義
+const btnPreset: React.CSSProperties = {
+  background: 'transparent',
+  border: '1.5px solid #7c3aed',
+  color: '#7c3aed',
+  borderRadius: 6,
+  padding: '4px 12px',
+  cursor: 'pointer',
+  fontSize: '.85rem',
+};
+
+const btnSources: React.CSSProperties = {
+  background: 'transparent',
+  border: '1.5px solid #64748b',
+  color: '#64748b',
+  borderRadius: 6,
+  padding: '4px 12px',
+  cursor: 'pointer',
+  fontSize: '.85rem',
+};
 
 interface Props {
   sources: FeedSource[];
@@ -147,38 +168,41 @@ export function FeedRegistration({ sources, onAdd, onRemove }: Props) {
         </button>
       </div>
 
+      {/* おすすめRSS：紫ボーダー */}
       <div style={{ marginTop: 8 }}>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: '.75rem', opacity: 0.6 }}>提案</span>
-          <span style={{ fontSize: '.85rem' }}>おすすめRSS（未追加候補）</span>
-          <button type="button" onClick={() => { setShowPresets(p => !p); setSelectedCategory(null); }}>
-            {showPresets ? 'おすすめRSSを閉じる' : 'おすすめRSSを表示'}
-          </button>
-        </div>
+        <button
+          type="button"
+          style={btnPreset}
+          onClick={() => { setShowPresets(p => !p); setSelectedCategory(null); }}
+        >
+          {showPresets ? 'おすすめRSSを閉じる ▲' : 'おすすめRSSを表示 ▼'}
+        </button>
 
         {showPresets && (
           <div style={{ marginTop: 8 }}>
-            {/* カテゴリボタン：flexWrapで折り返し対応 */}
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
               {RSS_PRESETS.map(cat => (
                 <button
                   key={cat.category}
                   type="button"
+                  style={{
+                    ...btnPreset,
+                    background: selectedCategory === cat.category ? '#7c3aed' : 'transparent',
+                    color: selectedCategory === cat.category ? '#fff' : '#7c3aed',
+                  }}
                   onClick={() => setSelectedCategory(selectedCategory === cat.category ? null : cat.category)}
-                  style={{ fontWeight: selectedCategory === cat.category ? 'bold' : 'normal' }}
                 >
                   {cat.category}
                 </button>
               ))}
             </div>
-
-            {/* 選択したカテゴリのフィード一覧：flexWrapで折り返し対応 */}
             {selectedCategory && (
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
                 {RSS_PRESETS.find(c => c.category === selectedCategory)?.items.map(item => (
                   <button
                     key={item.url}
                     type="button"
+                    style={btnPreset}
                     onClick={() => handleAddPreset(item)}
                     disabled={loading}
                   >
@@ -191,10 +215,16 @@ export function FeedRegistration({ sources, onAdd, onRemove }: Props) {
         )}
       </div>
 
+      {/* 登録済み：グレーボーダー */}
       <div style={{ marginTop: 8 }}>
-        <button type="button" onClick={() => setShowSources(p => !p)}>
-          {showSources ? '登録済みを閉じる' : `登録済み（${sources.length}）`}
+        <button
+          type="button"
+          style={btnSources}
+          onClick={() => setShowSources(p => !p)}
+        >
+          {showSources ? `登録済みを閉じる ▲` : `登録済み（${sources.length}）▼`}
         </button>
+
         {showSources && (
           <ul style={{ marginTop: 8, listStyle: 'none', padding: 0 }}>
             {sources.map(s => (
