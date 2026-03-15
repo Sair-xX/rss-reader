@@ -8,22 +8,9 @@ const RSS_PRESETS = [
     category: '物理学',
     items: [
       { label: 'Physics World', url: 'https://physicsworld.com/feed/' },
-      { label: 'APS Physics Magazine', url: 'https://physics.aps.org/feed' },
       { label: 'Nature Physics', url: 'https://www.nature.com/nphys.rss' },
-      { label: 'Physics Today', url: 'https://physicstoday.scitation.org/action/showFeed?type=etoc&feed=rss&jc=pto' },
       { label: 'CERN News', url: 'https://home.cern/api/news/opendata.rss' },
       { label: 'Quanta Magazine (Physics)', url: 'https://www.quantamagazine.org/tag/physics/feed/' },
-    ],
-  },
-  {
-    category: '経済',
-    items: [
-      { label: 'IMF Blog', url: 'https://www.imf.org/en/Blogs/rss' },
-      { label: 'World Bank Blogs', url: 'https://blogs.worldbank.org/rss.xml' },
-      { label: 'NBER Digest', url: 'https://www.nber.org/rss/digest.xml' },
-      { label: 'OECD Insights', url: 'https://oecdinsights.org/feed/' },
-      { label: 'VoxEU', url: 'https://cepr.org/voxeu/rss.xml' },
-      { label: 'Econbrowser', url: 'https://econbrowser.com/feed' },
     ],
   },
   {
@@ -44,8 +31,6 @@ const RSS_PRESETS = [
       { label: 'PLOS Biology', url: 'https://journals.plos.org/plosbiology/feed/atom' },
       { label: 'Cell Press', url: 'https://www.cell.com/cell/current.rss' },
       { label: 'Nature Ecology & Evolution', url: 'https://www.nature.com/natecolevol.rss' },
-      { label: 'Genome Biology', url: 'https://genomebiology.biomedcentral.com/articles/rss.xml' },
-      { label: 'The Scientist', url: 'https://www.the-scientist.com/feed' },
     ],
   },
   {
@@ -53,10 +38,8 @@ const RSS_PRESETS = [
     items: [
       { label: 'Zenn', url: 'https://zenn.dev/feed' },
       { label: 'Qiita', url: 'https://qiita.com/popular-items/feed.atom' },
-      { label: 'ITmedia', url: 'https://rss.itmedia.co.jp/rss/2.0/itmediamain.xml' },
       { label: 'ASCII.jp', url: 'https://ascii.jp/rss.xml' },
       { label: 'Gihyo（技術評論社）', url: 'https://gihyo.jp/feed/rss2' },
-      { label: 'ねとらぼ', url: 'https://nlab.itmedia.co.jp/nl/rss/2.0/index.rdf' },
       { label: 'WIRED Japan', url: 'https://wired.jp/rssfeeder/' },
     ],
   },
@@ -64,19 +47,10 @@ const RSS_PRESETS = [
     category: 'ゲーム',
     items: [
       { label: '4Gamer', url: 'https://www.4gamer.net/rss/index.xml' },
-      { label: 'ファミ通', url: 'https://www.famitsu.com/rss/fcom_all.rdf' },
       { label: 'Game*Spark', url: 'https://www.gamespark.jp/index.rdf' },
       { label: 'IGN Japan', url: 'https://jp.ign.com/feed.xml' },
       { label: 'AUTOMATON', url: 'https://automaton-media.com/feed/' },
       { label: 'Kotaku Japan', url: 'https://www.kotaku.jp/feed/index.xml' },
-    ],
-  },
-  {
-    category: 'アニメ',
-    items: [
-      { label: 'Anime!Anime!', url: 'https://animeanime.jp/rss20.xml' },
-      { label: 'アキバ総研', url: 'https://akiba-souken.com/rss/' },
-      { label: 'アニメハック', url: 'https://anime.eiga.com/rss/' },
     ],
   },
 ] as const;
