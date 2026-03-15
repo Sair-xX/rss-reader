@@ -29,6 +29,8 @@ const RSS_PRESETS = [
   {
     category: 'コンピューター・IT',
     items: [
+      { label: 'Zenn', url: 'https://zenn.dev/feed' },
+      { label: 'Qiita', url: 'https://qiita.com/popular-items/feed' },
       { label: 'Hacker News', url: 'https://hnrss.org/frontpage' },
       { label: 'Google AI Blog', url: 'https://blog.google/technology/ai/rss/' },
       { label: 'InfoQ', url: 'https://feed.infoq.com/' },
@@ -46,6 +48,36 @@ const RSS_PRESETS = [
       { label: 'Nature Ecology & Evolution', url: 'https://www.nature.com/natecolevol.rss' },
       { label: 'Genome Biology', url: 'https://genomebiology.biomedcentral.com/articles/rss.xml' },
       { label: 'The Scientist', url: 'https://www.the-scientist.com/feed' },
+    ],
+  },
+  {
+    category: '日本語IT・テック',
+    items: [
+      { label: 'ITmedia', url: 'https://rss.itmedia.co.jp/rss/2.0/itmediamain.xml' },
+      { label: 'ASCII.jp', url: 'https://ascii.jp/rss.xml' },
+      { label: 'Gihyo（技術評論社）', url: 'https://gihyo.jp/feed/rss2' },
+      { label: 'ねとらぼ', url: 'https://nlab.itmedia.co.jp/nl/rss/2.0/index.rdf' },
+      { label: 'WIRED Japan', url: 'https://wired.jp/rssfeeder/' },
+    ],
+  },
+  {
+    category: 'ゲーム',
+    items: [
+      { label: '4Gamer', url: 'https://www.4gamer.net/rss/index.xml' },
+      { label: 'ファミ通', url: 'https://www.famitsu.com/feed' },
+      { label: 'Game*Spark', url: 'https://www.gamespark.jp/index.rdf' },
+      { label: 'IGN Japan', url: 'https://jp.ign.com/feed.xml' },
+      { label: 'AUTOMATON', url: 'https://automaton-media.com/feed/' },
+      { label: 'Kotaku Japan', url: 'https://www.kotaku.jp/feed/index.xml' },
+    ],
+  },
+  {
+    category: 'アニメ',
+    items: [
+      { label: 'アニメイトタイムズ', url: 'https://www.animatetimes.com/rss/' },
+      { label: 'Anime!Anime!', url: 'https://animeanime.jp/rss20.xml' },
+      { label: 'アキバ総研', url: 'https://akiba-souken.com/rss/' },
+      { label: 'アニメハック', url: 'https://anime.eiga.com/rss/' },
     ],
   },
 ] as const;
@@ -66,33 +98,18 @@ export function FeedRegistration({ sources, onAdd, onRemove }: Props) {
 
   const handleAdd = async () => {
     if (!url.trim() || loading) return;
-
-    setLoading(true);
-    setError(null);
-
+    setLoading(true); setError(null);
     try {
       const res = await fetch(`${API}/api/sources/resolve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: url.trim() }),
+        credentials: 'include',
       });
-
-      if (!res.ok) {
-        setError('RSSフィードが見つかりませんでした');
-        return;
-      }
-
+      if (!res.ok) { setError('RSSフィードが見つかりませんでした'); return; }
       const data: { feedUrl?: string; title?: string } = await res.json();
-      if (!data.feedUrl) {
-        setError('RSSフィードが見つかりませんでした');
-        return;
-      }
-
-      await onAdd({
-        id: crypto.randomUUID(),
-        url: data.feedUrl,
-        label: data.title || data.feedUrl,
-      });
+      if (!data.feedUrl) { setError('RSSフィードが見つかりませんでした'); return; }
+      await onAdd({ id: crypto.randomUUID(), url: data.feedUrl, label: data.title || data.feedUrl });
       setUrl('');
     } catch {
       setError('通信エラーが発生しました');
@@ -103,8 +120,7 @@ export function FeedRegistration({ sources, onAdd, onRemove }: Props) {
 
   const handleAddPreset = async (preset: { label: string; url: string }) => {
     if (loading) return;
-    setLoading(true);
-    setError(null);
+    setLoading(true); setError(null);
     try {
       await onAdd({ id: crypto.randomUUID(), url: preset.url, label: preset.label });
     } catch {
@@ -121,10 +137,7 @@ export function FeedRegistration({ sources, onAdd, onRemove }: Props) {
         <input
           className="input-wide"
           value={url}
-          onChange={(e) => {
-            setUrl(e.target.value);
-            if (error) setError(null);
-          }}
+          onChange={(e) => { setUrl(e.target.value); if (error) setError(null); }}
           onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
           placeholder="サイトURL（例：https://zenn.dev）"
           disabled={loading}
@@ -133,84 +146,72 @@ export function FeedRegistration({ sources, onAdd, onRemove }: Props) {
           {loading ? 'フィードを検索中...' : '追加'}
         </button>
       </div>
-      <div className="feed-section feed-section-suggested">
-        <div className="feed-section-header">
-          <span className="feed-section-badge">提案</span>
-          <span className="feed-section-title">おすすめRSS（未追加候補）</span>
+
+      <div style={{ marginTop: 8 }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '.75rem', opacity: 0.6 }}>提案</span>
+          <span style={{ fontSize: '.85rem' }}>おすすめRSS（未追加候補）</span>
+          <button type="button" onClick={() => { setShowPresets(p => !p); setSelectedCategory(null); }}>
+            {showPresets ? 'おすすめRSSを閉じる' : 'おすすめRSSを表示'}
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={() => {
-            setShowPresets((prev) => !prev);
-            if (showPresets) setSelectedCategory(null);
-          }}
-        >
-          {showPresets ? 'おすすめRSSを閉じる' : 'おすすめRSSを表示'}
-        </button>
+
         {showPresets && (
-          <div style={{ display: 'grid', gap: 8, marginTop: 8 }}>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {RSS_PRESETS.map((group) => (
+          <div style={{ marginTop: 8 }}>
+            {/* カテゴリボタン：flexWrapで折り返し対応 */}
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
+              {RSS_PRESETS.map(cat => (
                 <button
-                  key={group.category}
+                  key={cat.category}
                   type="button"
-                  onClick={() => setSelectedCategory(group.category)}
-                  style={{
-                    textTransform: 'none',
-                    letterSpacing: '.05em',
-                    opacity: selectedCategory === group.category ? 1 : 0.85,
-                  }}
+                  onClick={() => setSelectedCategory(selectedCategory === cat.category ? null : cat.category)}
+                  style={{ fontWeight: selectedCategory === cat.category ? 'bold' : 'normal' }}
                 >
-                  {group.category}
+                  {cat.category}
                 </button>
               ))}
             </div>
+
+            {/* 選択したカテゴリのフィード一覧：flexWrapで折り返し対応 */}
             {selectedCategory && (
-              <div>
-                <div style={{ fontSize: '.7rem', color: '#7c3aedaa', marginBottom: 6 }}>{selectedCategory}の候補</div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                  {RSS_PRESETS.find((group) => group.category === selectedCategory)?.items.map((item) => (
-                    <button
-                      type="button"
-                      key={item.url}
-                      disabled={loading}
-                      onClick={() => handleAddPreset(item)}
-                      style={{ textTransform: 'none', letterSpacing: '.05em' }}
-                    >
-                      + {item.label}
-                    </button>
-                  ))}
-                </div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
+                {RSS_PRESETS.find(c => c.category === selectedCategory)?.items.map(item => (
+                  <button
+                    key={item.url}
+                    type="button"
+                    onClick={() => handleAddPreset(item)}
+                    disabled={loading}
+                  >
+                    + {item.label}
+                  </button>
+                ))}
               </div>
             )}
           </div>
         )}
       </div>
+
+      <div style={{ marginTop: 8 }}>
+        <button type="button" onClick={() => setShowSources(p => !p)}>
+          {showSources ? '登録済みを閉じる' : `登録済み（${sources.length}）`}
+        </button>
+        {showSources && (
+          <ul style={{ marginTop: 8, listStyle: 'none', padding: 0 }}>
+            {sources.map(s => (
+              <li key={s.id} style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
+                <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {s.label}
+                </span>
+                <button type="button" onClick={() => onRemove(s.id)} style={{ flexShrink: 0 }}>
+                  削除
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
       {error && <p style={{ color: '#ff6b6b', marginTop: 8 }}>{error}</p>}
-      {sources.length > 0 && (
-        <div className="feed-section feed-section-registered">
-          <div className="feed-section-header">
-            <span className="feed-section-badge">管理</span>
-            <span className="feed-section-title">追加済みRSS一覧（登録中）</span>
-          </div>
-          <button type="button" onClick={() => setShowSources((prev) => !prev)}>
-            {showSources ? '追加済みRSS一覧を隠す' : `追加済みRSS一覧を表示 (${sources.length})`}
-          </button>
-          {showSources && (
-            <ul className="source-list" style={{ marginTop: 8 }}>
-              {sources.map((s) => (
-                <li key={s.id} className="source-item">
-                  <span className="source-main">
-                    <span className="source-label">{s.label}</span>
-                    <span className="source-url">{s.url}</span>
-                  </span>
-                  <button type="button" className="btn-danger source-remove-btn" onClick={() => onRemove(s.id)}>削除</button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
     </section>
   );
 }
